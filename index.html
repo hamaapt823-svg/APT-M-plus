@@ -218,52 +218,65 @@
       const container = document.getElementById('feedContainer');
       container.innerHTML = '<div class="status-msg">بارکردنی تازەترین هەواڵەکان...</div>';
 
-      const targetFeed = feeds[category] || feeds.all;
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetFeed)}`;
+      const rssUrl = feeds[category] || feeds.all;
 
+      // هەوڵدان لە ڕێگەی api.rss2json.com
       try {
-        const response = await fetch(proxyUrl);
-        const data = await response.json();
+        const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`);
+        const data = await res.json();
 
+        if (data.status === 'ok' && data.items.length > 0) {
+          articlesCache = data.items.map(item => {
+            const temp = document.createElement("div");
+            temp.innerHTML = item.description || '';
+            const cleanText = temp.textContent || temp.innerText || '';
+
+            return {
+              title: item.title,
+              link: item.link,
+              date: item.pubDate,
+              description: cleanText.trim().slice(0, 150) + '...',
+              img: item.thumbnail || item.enclosure?.link || ''
+            };
+          });
+
+          displayArticles(articlesCache);
+          return;
+        }
+      } catch (e) {
+        console.log('Primary proxy failed, trying backup...');
+      }
+
+      // ئەگەر یەکەم سەرکەوتوو نەبوو، ڕاستەوخۆ دەچێتە سەر Backup Proxy
+      try {
+        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`);
+        const data = await res.json();
+        
         if (data.contents) {
           const parser = new DOMParser();
-          const xmlDoc = parser.parseFromString(data.contents, "text/xml");
-          const items = xmlDoc.querySelectorAll("item");
+          const xml = parser.parseFromString(data.contents, "text/xml");
+          const items = xml.querySelectorAll("item");
 
           articlesCache = [];
           items.forEach(item => {
-            const title = item.querySelector("title")?.textContent || '';
-            const link = item.querySelector("link")?.textContent || '#';
-            const pubDate = item.querySelector("pubDate")?.textContent || '';
             const rawDesc = item.querySelector("description")?.textContent || '';
-            
-            // وێنە
-            let img = '';
-            const enclosure = item.querySelector("enclosure");
-            if (enclosure) {
-              img = enclosure.getAttribute("url") || '';
-            }
-
-            // پاککردنەوەی پوختەکە
-            const tempDiv = document.createElement("div");
-            tempDiv.innerHTML = rawDesc;
-            const cleanDesc = tempDiv.textContent || tempDiv.innerText || '';
+            const temp = document.createElement("div");
+            temp.innerHTML = rawDesc;
 
             articlesCache.push({
-              title: title.trim(),
-              link: link.trim(),
-              date: pubDate,
-              description: cleanDesc.trim().slice(0, 150) + '...',
-              img: img
+              title: item.querySelector("title")?.textContent || '',
+              link: item.querySelector("link")?.textContent || '#',
+              date: item.querySelector("pubDate")?.textContent || '',
+              description: (temp.textContent || temp.innerText || '').trim().slice(0, 150) + '...',
+              img: item.querySelector("enclosure")?.getAttribute("url") || ''
             });
           });
 
           displayArticles(articlesCache);
-        } else {
-          container.innerHTML = '<div class="status-msg">هیچ هەواڵێک نەدۆزرایەوە.</div>';
+          return;
         }
-      } catch (err) {
-        container.innerHTML = '<div class="status-msg">کێشە لە گرێدان ڕوویدا. تکایە پەڕەکە نوێ بکەرەوە.</div>';
+      } catch (e) {
+        container.innerHTML = '<div class="status-msg">کێشە لە گرێدان ڕوویدا. تکایە دوابارە هەوڵبدەرەوە.</div>';
       }
     }
 
@@ -272,7 +285,7 @@
       container.innerHTML = '';
 
       if (articles.length === 0) {
-        container.innerHTML = '<div class="status-msg">هیچ ئەنجامێک نەدۆزرایەوە.</div>';
+        container.innerHTML = '<div class="status-msg">هیچ هەواڵێک نەدۆزرایەوە.</div>';
         return;
       }
 
