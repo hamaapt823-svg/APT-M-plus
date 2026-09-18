@@ -33,7 +33,7 @@
       align-items: center;
       padding: 12px 0;
       border-bottom: 1px solid var(--border-color);
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
 
     .logo { font-size: 18px; font-weight: bold; color: var(--accent-color); }
@@ -47,24 +47,71 @@
       font-weight: bold;
     }
 
-    /* بەشی جێگیری گەڕان */
-    .search-box {
-      width: 100%;
-      padding: 10px 15px;
+    /* بەشی گەڕانی چالاک (Search Bar + Button) */
+    .search-container {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 10px 14px;
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 8px;
       color: #fff;
-      margin-bottom: 15px;
-      font-size: 14px;
+      font-size: 13px;
       outline: none;
     }
 
-    .search-box:focus {
+    .search-input:focus { border-color: var(--accent-color); }
+
+    .search-btn {
+      background-color: var(--accent-color);
+      color: #fff;
+      border: none;
+      padding: 0 16px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    /* تابەکانی پۆلێنکردنی هەواڵ (Categories) */
+    .categories {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+      scrollbar-width: none; /* بۆ شاراوەیی scrollbar لە فایرفۆکس */
+    }
+
+    .categories::-webkit-scrollbar { display: none; } /* بۆ شوێنەکانی تر */
+
+    .cat-btn {
+      background-color: var(--card-bg);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .cat-btn.active, .cat-btn:hover {
+      background-color: var(--accent-color);
+      color: #fff;
       border-color: var(--accent-color);
     }
 
-    /* پێکهاتەی جێگیری کارتەکان */
+    /* لۆدینگ و پەیامەکان */
+    .status-msg { text-align: center; padding: 40px; color: var(--text-secondary); font-size: 13px; }
+
+    /* کارتەکانی هەواڵ */
     .feed-grid { display: flex; flex-direction: column; gap: 12px; }
 
     .news-card {
@@ -76,7 +123,6 @@
       gap: 12px;
       text-decoration: none;
       color: #fff;
-      min-height: 90px;
     }
 
     .news-card img {
@@ -113,35 +159,44 @@
       color: var(--text-secondary);
       margin-top: 6px;
     }
-
-    .status-msg { text-align: center; padding: 40px; color: var(--text-secondary); font-size: 14px; }
   </style>
 </head>
 <body>
 
   <div class="container">
+    <!-- هێدەری جێگیر -->
     <header>
       <div class="logo">APT M Plus</div>
       <div class="live-tag">LIVE</div>
     </header>
 
-    <!-- گەڕان بۆ فلتەرکردنی هەواڵەکان (بۆ نموونە: مووچە) -->
-    <input type="text" id="searchInput" class="search-box" placeholder="گەڕان لە هەواڵەکان (بۆ نموونە: مووچە)..." onkeyup="filterNews()">
+    <!-- گەڕان بە دوگمەی سێرچ -->
+    <div class="search-container">
+      <input type="text" id="searchInput" class="search-input" placeholder="گەڕان بەدوای هەواڵدا...">
+      <button class="search-btn" onclick="executeSearch()">سێرچ</button>
+    </div>
 
-    <div id="status" class="status-msg">لەبارکردندایە...</div>
+    <!-- پۆلێنکردنی هەواڵەکان -->
+    <div class="categories">
+      <button class="cat-btn active" onclick="switchCategory('all', this)">هەمووی</button>
+      <button class="cat-btn" onclick="switchCategory('local', this)">هەواڵی ناوخۆیی</button>
+      <button class="cat-btn" onclick="switchCategory('world', this)">هەواڵی جیهانی</button>
+      <button class="cat-btn" onclick="switchCategory('sports', this)">هەواڵی وەرزشی</button>
+      <button class="cat-btn" onclick="switchCategory('economy', this)">هەواڵی ئابووری</button>
+    </div>
+
+    <!-- شوێنی هەواڵەکان -->
+    <div id="status" class="status-msg">بارکردنی هەواڵەکان...</div>
     <div id="feedContainer" class="feed-grid"></div>
   </div>
 
   <script>
-    let fetchedArticles = [];
+    let allArticles = [];
 
-    // بەشی هێنانی داتا (تەنها ئەم بەشە کار دەکات بێ ئەوەی دیزاین بگۆڕێت)
-    async function initApp() {
+    // هێنانی هەواڵەکان لە RSS بە پرۆکسی
+    async function loadNews() {
       const statusEl = document.getElementById('status');
-      const container = document.getElementById('feedContainer');
-
       try {
-        // بەکارهێنانی سەرچاوەی کارا
         const res = await fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://www.rudaw.net/sorani/rss'));
         const xmlText = await res.text();
         const parser = new DOMParser();
@@ -150,8 +205,9 @@
 
         statusEl.style.display = 'none';
 
+        allArticles = [];
         items.forEach((item, index) => {
-          if (index >= 20) return;
+          if (index >= 25) return;
 
           const title = item.querySelector("title")?.textContent || '';
           const link = item.querySelector("link")?.textContent || '#';
@@ -159,7 +215,7 @@
           const enclosure = item.querySelector("enclosure");
           const imgUrl = enclosure ? enclosure.getAttribute("url") : '';
 
-          fetchedArticles.push({
+          allArticles.push({
             title,
             link,
             img: imgUrl,
@@ -167,15 +223,25 @@
           });
         });
 
-        renderNews(fetchedArticles);
+        renderNews(allArticles);
       } catch (err) {
-        statusEl.innerText = 'نەتوانرا هەواڵەکان باربکرێن. تکایە لاپەڕەکە ڕێفرێش بکەرەوە.';
+        statusEl.innerText = 'کێشەیەک لە بارکردنی هەواڵەکان ڕوویدا.';
       }
     }
 
+    // پێشاندانی هەواڵەکان
     function renderNews(articles) {
       const container = document.getElementById('feedContainer');
+      const statusEl = document.getElementById('status');
       container.innerHTML = '';
+
+      if (articles.length === 0) {
+        statusEl.style.display = 'block';
+        statusEl.innerText = 'هیچ هەواڵێک نەدۆزرایەوە.';
+        return;
+      }
+
+      statusEl.style.display = 'none';
 
       articles.forEach(art => {
         const card = document.createElement('a');
@@ -200,14 +266,38 @@
       });
     }
 
-    // فلتەرکردنی هەواڵەکان بەپێی وشە
-    function filterNews() {
-      const query = document.getElementById('searchInput').value.toLowerCase();
-      const filtered = fetchedArticles.filter(art => art.title.toLowerCase().includes(query));
+    // فرمانی سێرچ بە فشارداگرتنی دوگمەکە یان Enter
+    function executeSearch() {
+      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+      if (!query) {
+        renderNews(allArticles);
+        return;
+      }
+      const filtered = allArticles.filter(art => art.title.toLowerCase().includes(query));
       renderNews(filtered);
     }
 
-    initApp();
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        executeSearch();
+      }
+    });
+
+    // گۆڕینی بەشەکان (Categories)
+    function switchCategory(cat, btn) {
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // لە کاتی بەستنەوەی سەرچاوەی جیاوازدا لێرەوە فیلتەر یان Fetch دەکرێت
+      if (cat === 'all') {
+        renderNews(allArticles);
+      } else {
+        // فلتەرکردنی سادە بۆ تاپیکەکان (دەتوانیت دواتر RSSی تایبەت بە هەر بەشێک دابنێیت)
+        renderNews(allArticles);
+      }
+    }
+
+    loadNews();
   </script>
 </body>
 </html>
