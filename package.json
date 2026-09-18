@@ -1,8 +1,15 @@
 {
-  "name": "apt-m-plus",
+  "name": "@workspace/scripts",
+  "version": "0.0.0",
   "private": true,
-  "version": "1.0.0",
+  "type": "module",
   "scripts": {
-    "build": "echo 'Build successful'"
+    "hello": "tsx ./src/hello.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "tsx": "catalog:"
   }
 }
+
