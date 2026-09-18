@@ -105,33 +105,49 @@
   </div>
 
   <script>
-    // بەستەری RSSی بەشی سۆرانیی ڕووداو
     const RUDAW_RSS = 'https://www.rudaw.net/sorani/rss';
-    const API_URL = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(RUDAW_RSS)}`;
+    // بەکارهێنانی proxy بێ کێشەی Allorigins
+    const PROXY_URL = `https://api.allorigins.win/get?url=${encodeURIComponent(RUDAW_RSS)}`;
 
     async function fetchRudawNews() {
       try {
-        const res = await fetch(API_URL);
+        const res = await fetch(PROXY_URL);
         const data = await res.json();
 
         document.getElementById('loading').style.display = 'none';
 
-        if (data.status === 'ok' && data.items.length > 0) {
+        if (data.contents) {
+          const parser = new DOMParser();
+          const xmlDoc = parser.parseFromString(data.contents, "text/xml");
+          const items = xmlDoc.querySelectorAll("item");
           const container = document.getElementById('feedContainer');
 
-          data.items.forEach(item => {
+          items.forEach((item, index) => {
+            if(index >= 15) return; // تەنها ١٥ هەواڵی سەرەکی
+
+            const title = item.querySelector("title")?.textContent || '';
+            const link = item.querySelector("link")?.textContent || '#';
+            const pubDateRaw = item.querySelector("pubDate")?.textContent || '';
+            
+            // دۆزینەوەی بەستەری وێنە
+            let imgUrl = '';
+            const enclosure = item.querySelector("enclosure");
+            if (enclosure) {
+              imgUrl = enclosure.getAttribute("url");
+            }
+
+            const pubDate = pubDateRaw ? new Date(pubDateRaw).toLocaleString('ckb-IQ', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '';
+            const imgHtml = imgUrl ? `<img src="${imgUrl}" alt="Rudaw">` : '<div style="width:110px;height:80px;background:#222;border-radius:8px;"></div>';
+
             const card = document.createElement('a');
             card.className = 'news-card';
-            card.href = item.link;
+            card.href = link;
             card.target = '_blank';
-
-            const pubDate = item.pubDate ? new Date(item.pubDate).toLocaleString('ckb-IQ', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '';
-            const imgHtml = item.thumbnail ? `<img src="${item.thumbnail}" alt="Rudaw">` : '<div style="width:110px;height:80px;background:#222;border-radius:8px;"></div>';
 
             card.innerHTML = `
               ${imgHtml}
               <div class="news-content">
-                <h2 class="news-title">${item.title}</h2>
+                <h2 class="news-title">${title}</h2>
                 <span class="news-date">${pubDate}</span>
               </div>
             `;
