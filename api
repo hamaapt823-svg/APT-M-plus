@@ -1,1 +1,62 @@
+export const config = {
+  runtime: 'edge',
+};
 
+export default async function handler(req) {
+  const { searchParams } = new URL(req.url);
+  const cat = searchParams.get('cat') || 'all';
+
+  const feeds = {
+    all: 'https://www.kurdistan24.net/ckb/rss',
+    local: 'https://www.kurdistan24.net/ckb/rss/kurdistan',
+    world: 'https://www.kurdistan24.net/ckb/rss/world',
+    sports: 'https://www.kurdistan24.net/ckb/rss/sport',
+    economy: 'https://www.kurdistan24.net/ckb/rss/economy'
+  };
+
+  const targetUrl = feeds[cat] || feeds.all;
+
+  try {
+    const res = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      },
+      next: { revalidate: 60 }
+    });
+
+    const xmlText = await res.text();
+
+    // جیاکردنەوەی بڕگەکان لە XML
+    const items = xmlText.split('<item>').slice(1).map(itemStr => {
+      const title = itemStr.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/s)?.[1] || itemStr.match(/<title>(.*?)<\/title>/s)?.[1] || '';
+      const link = itemStr.match(/<link>(.*?)<\/link>/s)?.[1] || '#';
+      const pubDate = itemStr.match(/<pubDate>(.*?)<\/pubDate>/s)?.[1] || '';
+      const description = itemStr.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/s)?.[1] || itemStr.match(/<description>(.*?)<\/description>/s)?.[1] || '';
+      const img = itemStr.match(/<enclosure[^>]+url=["']([^"']+)["']/s)?.[1] || itemStr.match(/<media:content[^>]+url=["']([^"']+)["']/s)?.[1] || '';
+
+      // پاککردنەوەی تاگەکانی HTML لە پوختەکەدا
+      const cleanDesc = description.replace(/<[^>]*>?/gm, '').trim();
+
+      return {
+        title: title.trim(),
+        link: link.trim(),
+        date: pubDate.trim(),
+        description: cleanDesc.length > 0 ? cleanDesc.slice(0, 160) + '...' : 'پوختەی هەواڵ لەم بەستەرەدا بەردەستە.',
+        img: img.trim()
+      };
+    });
+
+    return new Response(JSON.stringify({ status: 'success', articles: items }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 's-maxage=60, stale-while-revalidate'
+      }
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ status: 'error', message: err.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
