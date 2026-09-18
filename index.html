@@ -26,7 +26,6 @@
 
     .container { max-width: 800px; margin: 0 auto; }
 
-    /* هێدەر */
     header {
       display: flex;
       justify-content: space-between;
@@ -47,7 +46,6 @@
       font-weight: bold;
     }
 
-    /* گەڕان */
     .search-container {
       display: flex;
       gap: 8px;
@@ -78,14 +76,12 @@
       font-size: 13px;
     }
 
-    /* داڕشتن: بەشەکان لای ڕاست + هەواڵەکان لای چەپ */
     .main-layout {
       display: flex;
       gap: 12px;
       align-items: flex-start;
     }
 
-    /* بەشەکان لە لای ڕاست لە خوار یەک */
     .sidebar-categories {
       display: flex;
       flex-direction: column;
@@ -112,7 +108,6 @@
       border-color: var(--accent-color);
     }
 
-    /* لیست و کارتەکان */
     .feed-container {
       flex: 1;
       display: flex;
@@ -183,7 +178,6 @@
     </div>
 
     <div class="main-layout">
-      <!-- بەشەکان لە خوار یەک لە لای ڕاست -->
       <aside class="sidebar-categories">
         <button class="cat-btn active" onclick="switchCategory('all', this)">هەمووی</button>
         <button class="cat-btn" onclick="switchCategory('local', this)">هەواڵی ناوخۆیی</button>
@@ -192,71 +186,60 @@
         <button class="cat-btn" onclick="switchCategory('economy', this)">هەواڵی ئابووری</button>
       </aside>
 
-      <!-- شوێنی هەواڵەکان -->
       <main class="feed-container" id="feedContainer">
-        <div id="status" class="status-msg">بارکردنی هەواڵەکان...</div>
       </main>
     </div>
   </div>
 
   <script>
-    let allNews = [];
-    let activeCategory = 'all';
-
-    // ڕاستەوخۆ هێنانی API
-    const RSS_FEEDS = [
-      { name: 'کوردستان ٢٤', url: 'https://www.kurdistan24.net/ckb/rss', cat: 'local' },
-      { name: 'وەرزش', url: 'https://www.kurdistan24.net/ckb/rss/sport', cat: 'sports' },
-      { name: 'جیهان', url: 'https://www.kurdistan24.net/ckb/rss/world', cat: 'world' },
-      { name: 'ئابووری', url: 'https://www.kurdistan24.net/ckb/rss/economy', cat: 'economy' }
+    // داتای سەرەکی هەواڵەکان
+    const newsData = [
+      {
+        id: 1,
+        title: "تازەترین گۆڕانکارییەکان لە بازاڕی دراو و نرخی زێڕ لە هەرێم",
+        category: "economy",
+        source: "ئابووری",
+        date: "پێش ٥ خولەک",
+        img: "https://picsum.photos/200/150?random=1",
+        link: "#"
+      },
+      {
+        id: 2,
+        title: "یارییەکانی ئەمشەوی خولی پاڵەوانەکانی ئەوروپا دەستپێدەکاتەوە",
+        category: "sports",
+        source: "وەرزش",
+        date: "پێش ١٥ خولەک",
+        img: "https://picsum.photos/200/150?random=2",
+        link: "#"
+      },
+      {
+        id: 3,
+        title: "کەشوهەوای پارێزگاکانی هەرێم بۆ چەند ڕۆژی داهاتوو ڕاگەیەندرا",
+        category: "local",
+        source: "ناوخۆیی",
+        date: "پێش ٣٠ خولەک",
+        img: "https://picsum.photos/200/150?random=3",
+        link: "#"
+      },
+      {
+        id: 4,
+        title: "کۆبوونەوەی لوتکەی وڵاتانی جیهان سەبارەت بە تەکنەلۆژیا و AI بەڕێوەچوو",
+        category: "world",
+        source: "جیهانی",
+        date: "پێش ١ کاتژمێر",
+        img: "https://picsum.photos/200/150?random=4",
+        link: "#"
+      }
     ];
 
-    async function fetchNews() {
-      const container = document.getElementById('feedContainer');
-      container.innerHTML = '<div class="status-msg">بارکردنی هەواڵەکان...</div>';
-      allNews = [];
-
-      const promises = RSS_FEEDS.map(async (feed) => {
-        try {
-          const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`;
-          const response = await fetch(apiUrl);
-          const data = await response.json();
-
-          if (data.status === 'ok' && data.items) {
-            data.items.forEach(item => {
-              allNews.push({
-                source: feed.name,
-                category: feed.cat,
-                title: item.title,
-                link: item.link,
-                img: item.thumbnail || item.enclosure?.link || '',
-                date: new Date(item.pubDate)
-              });
-            });
-          }
-        } catch (e) {
-          console.error('Error fetching feed:', e);
-        }
-      });
-
-      await Promise.all(promises);
-
-      // ڕێکخستنی هەواڵەکان بەپێی تازەترین کات
-      allNews.sort((a, b) => b.date - a.date);
-
-      if (allNews.length === 0) {
-        container.innerHTML = '<div class="status-msg">هیچ هەواڵێک نەدۆزرایەوە. تکایە دوابارە پەڕەکە هێواش بکەرەوە.</div>';
-      } else {
-        renderNews(allNews);
-      }
-    }
+    let activeCategory = 'all';
 
     function renderNews(articles) {
       const container = document.getElementById('feedContainer');
       container.innerHTML = '';
 
       if (articles.length === 0) {
-        container.innerHTML = '<div class="status-msg">هیچ هەواڵێک لەم بەشەدا نییە.</div>';
+        container.innerHTML = '<div class="status-msg">هیچ هەواڵێک بەردەست نییە.</div>';
         return;
       }
 
@@ -264,24 +247,15 @@
         const card = document.createElement('a');
         card.className = 'news-card';
         card.href = art.link;
-        card.target = '_blank';
-
-        const pubDate = art.date && !isNaN(art.date) 
-          ? art.date.toLocaleTimeString('ckb-IQ', { hour: '2-digit', minute: '2-digit' }) 
-          : '';
-
-        const imgHtml = art.img 
-          ? `<img src="${art.img}" alt="news" onerror="this.style.display='none'">` 
-          : '<div style="width:80px;height:60px;background:#1e222d;border-radius:6px;flex-shrink:0;"></div>';
 
         card.innerHTML = `
-          ${imgHtml}
+          <img src="${art.img}" alt="news">
           <div class="news-content">
             <div>
               <span class="news-source">${art.source}</span>
               <h2 class="news-title">${art.title}</h2>
             </div>
-            <span class="news-date">${pubDate}</span>
+            <span class="news-date">${art.date}</span>
           </div>
         `;
         container.appendChild(card);
@@ -294,16 +268,16 @@
       activeCategory = cat;
 
       if (cat === 'all') {
-        renderNews(allNews);
+        renderNews(newsData);
       } else {
-        const filtered = allNews.filter(item => item.category === cat);
+        const filtered = newsData.filter(item => item.category === cat);
         renderNews(filtered);
       }
     }
 
     function executeSearch() {
       const query = document.getElementById('searchInput').value.trim().toLowerCase();
-      let list = activeCategory === 'all' ? allNews : allNews.filter(i => i.category === activeCategory);
+      let list = activeCategory === 'all' ? newsData : newsData.filter(i => i.category === activeCategory);
 
       if (!query) {
         renderNews(list);
@@ -318,7 +292,8 @@
       if (e.key === 'Enter') executeSearch();
     });
 
-    fetchNews();
+    // بارکردنی سەرەتایی
+    renderNews(newsData);
   </script>
 </body>
 </html>
