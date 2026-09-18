@@ -48,6 +48,15 @@
       color: var(--accent-color);
     }
 
+    .badge {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
     .feed-grid {
       display: flex;
       flex-direction: column;
@@ -61,6 +70,7 @@
       border: 1px solid var(--border-color);
       line-height: 1.6;
       font-size: 14px;
+      word-break: break-word;
     }
 
     .post-date {
@@ -96,33 +106,33 @@
   <div class="container">
     <header>
       <div class="logo">APT M Plus</div>
-      <span style="font-size: 13px; color: var(--accent-color);">AKB Media</span>
+      <div class="badge">AKB Media</div>
     </header>
 
-    <div id="loading" class="loading">داگرتنی پۆستەکانی AKB Media...</div>
+    <div id="loading" class="loading">داگرتنی پۆستەکان...</div>
     <div id="error" class="error" style="display: none; color: #ff4d4d;"></div>
     <div id="feedContainer" class="feed-grid"></div>
 
     <a href="https://t.me/akb_media" target="_blank" class="btn-telegram">
-      کردنەوەی ڕاستەوخۆ لە ئەپی تیلیگرام
+      سەردانی کەناڵی فەرمی AKB Media لە تیلیگرام بکە
     </a>
   </div>
 
   <script>
-    // بەکارهێنانی RSS Feed بۆ پۆستەکانی کەناڵی AKB Media لە تیلیگرام
-    const TELEGRAM_RSS = 'https://rsshub.app/telegram/channel/akb_media';
-    const API_URL = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(TELEGRAM_RSS)}`;
+    // بەکارهێنانی سەرڤەری بەهێزی RSSBridge
+    const RSS_URL = 'https://rssbridge.pro/bridge?action=display&bridge=TelegramBridge&username=akb_media&format=Atom';
+    const API_URL = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(RSS_URL)}`;
 
-    async function fetchTelegramPosts() {
+    async function loadTelegramFeed() {
       try {
-        const response = await fetch(API_URL);
-        const data = await response.json();
+        const res = await fetch(API_URL);
+        const data = await res.json();
 
         document.getElementById('loading').style.display = 'none';
 
-        if (data.status === 'ok' && data.items.length > 0) {
+        if (data.status === 'ok' && data.items && data.items.length > 0) {
           const container = document.getElementById('feedContainer');
-          
+
           data.items.forEach(item => {
             const card = document.createElement('div');
             card.className = 'post-card';
@@ -130,23 +140,34 @@
             const pubDate = item.pubDate ? new Date(item.pubDate).toLocaleString('ckb-IQ') : '';
 
             card.innerHTML = `
-              <div>${item.content || item.title}</div>
+              <div>${item.content || item.description || item.title}</div>
               <span class="post-date">${pubDate}</span>
             `;
             container.appendChild(card);
           });
         } else {
-          throw new Error('پۆستەکان نەدۆزرانەوە');
+          // ئەگەر APIەکە هەڵەی دادا، ئامرازی جێگرەوە جێبەجێ بکه
+          showFallbackFeed();
         }
       } catch (err) {
-        document.getElementById('loading').style.display = 'none';
-        const errDiv = document.getElementById('error');
-        errDiv.style.display = 'block';
-        errDiv.innerText = 'نەتوانرا پۆستەکان باربکرێن. تکایە هێڵی ئینتەرنێت بپشکنە.';
+        showFallbackFeed();
       }
     }
 
-    fetchTelegramPosts();
+    function showFallbackFeed() {
+      document.getElementById('loading').style.display = 'none';
+      const container = document.getElementById('feedContainer');
+      container.innerHTML = `
+        <div class="post-card" style="text-align: center;">
+          <p style="margin-bottom: 10px;">بۆ دیداری ڕاستەوخۆی گشت پۆستەکان بە وێنە و ڤیدیۆوە:</p>
+          <a href="https://t.me/s/akb_media" target="_blank" style="color: var(--accent-color); font-weight: bold; text-decoration: none;">
+            کلیک لەم بەستەرە بکە بۆ بازدانی ڕاستەوخۆ
+          </a>
+        </div>
+      `;
+    }
+
+    loadTelegramFeed();
   </script>
 </body>
 </html>
