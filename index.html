@@ -111,14 +111,15 @@
       <div class="live-tag">LIVE - چرکە بە چرکە</div>
     </header>
 
-    <div id="loading" class="loading">داگرتنی نوێترین هەواڵەکانی کوردستان و جیهان...</div>
+    <div id="loading" class="loading">داگرتنی نوێترین هەواڵەکانی کوردستان...</div>
     <div id="error" class="error" style="display: none; color: var(--accent-color);"></div>
     <div id="feedContainer" class="feed-grid"></div>
   </div>
 
   <script>
-    const RSS_URL = 'https://www.rudaw.net/sorani/rss';
-    const API_URL = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(RSS_URL)}`;
+    const RUDAW_RSS = 'https://www.rudaw.net/sorani/rss';
+    // بەکارهێنانی proxy بێ کێشەی CodeTabs
+    const PROXY_URL = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(RUDAW_RSS)}`;
 
     async function loadNews() {
       const loadingEl = document.getElementById('loading');
@@ -126,27 +127,44 @@
       const container = document.getElementById('feedContainer');
 
       try {
-        const response = await fetch(API_URL);
-        const data = await response.json();
+        const response = await fetch(PROXY_URL);
+        if (!response.ok) throw new Error('تێکچوونی پەیوەندی');
+        
+        const xmlText = await response.text();
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+        const items = xmlDoc.querySelectorAll("item");
 
         loadingEl.style.display = 'none';
 
-        if (data.status === 'ok' && data.items && data.items.length > 0) {
-          data.items.forEach(item => {
+        if (items.length > 0) {
+          items.forEach((item, index) => {
+            if (index >= 15) return;
+
+            const title = item.querySelector("title")?.textContent || '';
+            const link = item.querySelector("link")?.textContent || '#';
+            const pubDateRaw = item.querySelector("pubDate")?.textContent || '';
+            
+            let imgUrl = '';
+            const enclosure = item.querySelector("enclosure");
+            if (enclosure) {
+              imgUrl = enclosure.getAttribute("url");
+            }
+
+            const pubDate = pubDateRaw ? new Date(pubDateRaw).toLocaleString('ckb-IQ', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '';
+            const imgHtml = imgUrl ? `<img src="${imgUrl}" alt="Rudaw">` : '<div style="width:100px;height:75px;background:#1e222d;border-radius:8px;flex-shrink:0;"></div>';
+
             const card = document.createElement('a');
             card.className = 'news-card';
-            card.href = item.link;
+            card.href = link;
             card.target = '_blank';
-
-            const pubDate = item.pubDate ? new Date(item.pubDate).toLocaleString('ckb-IQ', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '';
-            const imgHtml = item.thumbnail ? `<img src="${item.thumbnail}" alt="News">` : '<div style="width:100px;height:75px;background:#1e222d;border-radius:8px;flex-shrink:0;"></div>';
 
             card.innerHTML = `
               ${imgHtml}
               <div class="news-content">
                 <div>
                   <span class="news-source">ڕووداو</span>
-                  <h2 class="news-title">${item.title}</h2>
+                  <h2 class="news-title">${title}</h2>
                 </div>
                 <span class="news-date">${pubDate}</span>
               </div>
@@ -154,12 +172,12 @@
             container.appendChild(card);
           });
         } else {
-          throw new Error('هیچ هەواڵێک بەردەست نییە');
+          throw new Error('هیچ هەواڵێک نەدۆزرایەوە');
         }
       } catch (err) {
         loadingEl.style.display = 'none';
         errorEl.style.display = 'block';
-        errorEl.innerText = 'کێشەیەک لە بارکردنی هەواڵەکان ڕوویدا. تکایە هێڵی ئینتەرنێتەکەت بپشکنە.';
+        errorEl.innerText = 'کێشەیەک لە بارکردنی هەواڵەکان ڕوویدا. تکایە دووبارە هەوڵبدەرەوە.';
       }
     }
 
