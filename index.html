@@ -21,17 +21,17 @@
       color: var(--text-color);
       font-family: system-ui, -apple-system, sans-serif;
       direction: rtl;
-      padding: 15px;
+      padding: 12px;
     }
 
     .container { max-width: 800px; margin: 0 auto; }
 
-    /* هێدەری جێگیر */
+    /* هێدەر */
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 0;
+      padding: 10px 0;
       border-bottom: 1px solid var(--border-color);
       margin-bottom: 15px;
     }
@@ -47,16 +47,16 @@
       font-weight: bold;
     }
 
-    /* بەشی گەڕان */
+    /* گەڕان */
     .search-container {
       display: flex;
       gap: 8px;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
 
     .search-input {
       flex: 1;
-      padding: 10px 14px;
+      padding: 10px 12px;
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 8px;
@@ -78,19 +78,19 @@
       font-size: 13px;
     }
 
-    /* داڕشتنی سەرەکی: بەشەکان لە ڕاست + هەواڵەکان لە چەپ */
+    /* داڕشتن: بەشەکان لای ڕاست + هەواڵەکان لای چەپ */
     .main-layout {
       display: flex;
-      gap: 15px;
+      gap: 12px;
       align-items: flex-start;
     }
 
-    /* بەشەکان (لە لای ڕاست و لە خوار یەک) */
+    /* بەشەکان لە لای ڕاست لە خوار یەک */
     .sidebar-categories {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      width: 140px;
+      width: 130px;
       flex-shrink: 0;
     }
 
@@ -98,7 +98,7 @@
       background-color: var(--card-bg);
       color: var(--text-secondary);
       border: 1px solid var(--border-color);
-      padding: 10px 12px;
+      padding: 10px 8px;
       border-radius: 8px;
       font-size: 12px;
       text-align: right;
@@ -112,30 +112,30 @@
       border-color: var(--accent-color);
     }
 
-    /* ناوەڕۆکی هەواڵەکان */
+    /* لیست و کارتەکان */
     .feed-container {
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .news-card {
       background-color: var(--card-bg);
-      border-radius: 12px;
-      padding: 12px;
+      border-radius: 10px;
+      padding: 10px;
       border: 1px solid var(--border-color);
       display: flex;
-      gap: 12px;
+      gap: 10px;
       text-decoration: none;
       color: #fff;
     }
 
     .news-card img {
-      width: 85px;
-      height: 65px;
+      width: 80px;
+      height: 60px;
       object-fit: cover;
-      border-radius: 8px;
+      border-radius: 6px;
       flex-shrink: 0;
       background-color: #1e222d;
     }
@@ -148,13 +148,13 @@
     }
 
     .news-source {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--accent-color);
       font-weight: bold;
     }
 
     .news-title {
-      font-size: 13px;
+      font-size: 12px;
       line-height: 1.4;
       color: #f1f1f1;
       margin-top: 2px;
@@ -166,22 +166,7 @@
       margin-top: 4px;
     }
 
-    .status-msg { text-align: center; padding: 30px; color: var(--text-secondary); font-size: 13px; width: 100%; }
-
-    /* گونجاندنی شاشەی موبایل (دەبێتە سەر و خوار لە شاشەی زۆر بچووک) */
-    @media (max-width: 480px) {
-      .main-layout {
-        flex-direction: column;
-      }
-      .sidebar-categories {
-        width: 100%;
-        flex-direction: row;
-        overflow-x: auto;
-      }
-      .cat-btn {
-        white-space: nowrap;
-      }
-    }
+    .status-msg { text-align: center; padding: 25px; color: var(--text-secondary); font-size: 13px; width: 100%; }
   </style>
 </head>
 <body>
@@ -198,16 +183,16 @@
     </div>
 
     <div class="main-layout">
-      <!-- بەشەکان لە لای ڕاست لە خوار یەک -->
+      <!-- بەشەکان لە خوار یەک لە لای ڕاست -->
       <aside class="sidebar-categories">
-        <button class="cat-btn active" onclick="switchCategory('all', this)">هەمووی</button>
-        <button class="cat-btn" onclick="switchCategory('local', this)">هەواڵی ناوخۆیی</button>
-        <button class="cat-btn" onclick="switchCategory('world', this)">هەواڵی جیهانی</button>
-        <button class="cat-btn" onclick="switchCategory('sports', this)">هەواڵی وەرزشی</button>
-        <button class="cat-btn" onclick="switchCategory('economy', this)">هەواڵی ئابووری</button>
+        <button class="cat-btn active" onclick="fetchCategory('all', this)">هەمووی</button>
+        <button class="cat-btn" onclick="fetchCategory('local', this)">هەواڵی ناوخۆیی</button>
+        <button class="cat-btn" onclick="fetchCategory('world', this)">هەواڵی جیهانی</button>
+        <button class="cat-btn" onclick="fetchCategory('sports', this)">هەواڵی وەرزشی</button>
+        <button class="cat-btn" onclick="fetchCategory('economy', this)">هەواڵی ئابووری</button>
       </aside>
 
-      <!-- بەشی پێشاندانی هەواڵەکان -->
+      <!-- شوێنی هەواڵەکان -->
       <main class="feed-container" id="feedContainer">
         <div id="status" class="status-msg">بارکردنی هەواڵەکان...</div>
       </main>
@@ -215,38 +200,40 @@
   </div>
 
   <script>
-    let allArticles = [];
+    let currentArticles = [];
 
-    async function loadNews() {
-      const statusEl = document.getElementById('status');
+    const FEEDS = {
+      all: 'https://www.rudaw.net/sorani/rss',
+      local: 'https://www.rudaw.net/sorani/kurdistan/rss',
+      world: 'https://www.rudaw.net/sorani/world/rss',
+      sports: 'https://www.rudaw.net/sorani/sports/rss',
+      economy: 'https://www.rudaw.net/sorani/business/rss'
+    };
+
+    async function fetchCategory(catKey, btn) {
+      if(btn) {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+
+      const container = document.getElementById('feedContainer');
+      container.innerHTML = '<div class="status-msg">بارکردنی هەواڵەکان...</div>';
+
+      const feedUrl = FEEDS[catKey] || FEEDS.all;
+      const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`;
+
       try {
-        const res = await fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://www.rudaw.net/sorani/rss'));
-        const xmlText = await res.text();
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-        const items = xmlDoc.querySelectorAll("item");
+        const res = await fetch(apiUrl);
+        const data = await res.json();
 
-        allArticles = [];
-        items.forEach((item, index) => {
-          if (index >= 20) return;
-
-          const title = item.querySelector("title")?.textContent || '';
-          const link = item.querySelector("link")?.textContent || '#';
-          const pubDateRaw = item.querySelector("pubDate")?.textContent || '';
-          const enclosure = item.querySelector("enclosure");
-          const imgUrl = enclosure ? enclosure.getAttribute("url") : '';
-
-          allArticles.push({
-            title,
-            link,
-            img: imgUrl,
-            date: pubDateRaw ? new Date(pubDateRaw) : new Date()
-          });
-        });
-
-        renderNews(allArticles);
+        if (data.status === 'ok' && data.items && data.items.length > 0) {
+          currentArticles = data.items;
+          renderNews(currentArticles);
+        } else {
+          container.innerHTML = '<div class="status-msg">هیچ هەواڵێک بەردەست نییە.</div>';
+        }
       } catch (err) {
-        if(statusEl) statusEl.innerText = 'کێشەیەک لە بارکردنی هەواڵەکان ڕوویدا.';
+        container.innerHTML = '<div class="status-msg">کێشەیەک ڕوویدا. تکایە دووبارە هەوڵبدەرەوە.</div>';
       }
     }
 
@@ -265,8 +252,8 @@
         card.href = art.link;
         card.target = '_blank';
 
-        const pubDate = art.date.toLocaleString('ckb-IQ', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' });
-        const imgHtml = art.img ? `<img src="${art.img}" alt="news">` : '<div style="width:85px;height:65px;background:#1e222d;border-radius:8px;flex-shrink:0;"></div>';
+        const pubDate = art.pubDate ? new Date(art.pubDate).toLocaleString('ckb-IQ', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '';
+        const imgHtml = art.thumbnail ? `<img src="${art.thumbnail}" alt="news">` : '<div style="width:80px;height:60px;background:#1e222d;border-radius:6px;flex-shrink:0;"></div>';
 
         card.innerHTML = `
           ${imgHtml}
@@ -285,10 +272,10 @@
     function executeSearch() {
       const query = document.getElementById('searchInput').value.trim().toLowerCase();
       if (!query) {
-        renderNews(allArticles);
+        renderNews(currentArticles);
         return;
       }
-      const filtered = allArticles.filter(art => art.title.toLowerCase().includes(query));
+      const filtered = currentArticles.filter(art => art.title.toLowerCase().includes(query));
       renderNews(filtered);
     }
 
@@ -296,13 +283,7 @@
       if (e.key === 'Enter') executeSearch();
     });
 
-    function switchCategory(cat, btn) {
-      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderNews(allArticles);
-    }
-
-    loadNews();
+    fetchCategory('all');
   </script>
 </body>
 </html>
