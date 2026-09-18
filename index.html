@@ -3,14 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>APT M Plus - پەیجی فەیسبووک</title>
+  <title>APT M Plus - AKB Media</title>
   <style>
     :root {
       --bg-color: #090a0f;
       --card-bg: #161922;
-      --accent-color: #e2001a;
+      --accent-color: #24A1DE; /* ڕەنگی تیلیگرام */
       --border-color: #2a2e3d;
       --text-color: #ffffff;
+      --text-secondary: #a0a5b5;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
     body {
@@ -19,65 +26,105 @@
       font-family: system-ui, -apple-system, sans-serif;
       direction: rtl;
       padding: 15px;
-      margin: 0;
     }
 
     .container {
-      max-width: 500px;
+      max-width: 600px;
       margin: 0 auto;
     }
 
+    /* Header */
     header {
-      padding: 10px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
       border-bottom: 1px solid var(--border-color);
       margin-bottom: 20px;
-      text-align: center;
     }
 
     .logo {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: bold;
       color: var(--accent-color);
     }
 
-    .fb-container {
-      background: var(--card-bg);
+    .badge {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    /* Feed Container */
+    .feed-container {
+      background-color: var(--card-bg);
       border-radius: 12px;
-      padding: 10px;
+      padding: 15px;
       border: 1px solid var(--border-color);
       display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 450px;
+    }
+
+    .telegram-post-wrapper {
+      width: 100%;
+      display: flex;
       justify-content: center;
-      overflow: hidden;
+    }
+
+    /* Button to Open Channel */
+    .btn-telegram {
+      display: block;
+      width: 100%;
+      text-align: center;
+      background-color: var(--accent-color);
+      color: #fff;
+      text-decoration: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      margin-top: 15px;
+      font-size: 14px;
+      transition: opacity 0.2s;
+    }
+
+    .btn-telegram:hover {
+      opacity: 0.9;
     }
   </style>
 </head>
 <body>
 
-  <!-- Facebook SDK -->
-  <div id="fb-root"></div>
-  <script async defer crossorigin="anonymous" src="https://connect.facebook.net/ckb_IQ/sdk.js#xfbml=1&version=v18.0"></script>
-
   <div class="container">
+    <!-- Header -->
     <header>
-      <div class="logo">APT M Plus - دوایین پۆستەکان</div>
+      <div class="logo">APT M Plus</div>
+      <div class="badge">AKB Media</div>
     </header>
 
-    <!-- Facebook Feed Widget -->
-    <div class="fb-container">
-      <div class="fb-page" 
-        data-href="https://www.facebook.com/share/1Az35L1w99/" 
-        data-tabs="timeline" 
-        data-width="500" 
-        data-height="800" 
-        data-small-header="false" 
-        data-adapt-container-width="true" 
-        data-hide-cover="false" 
-        data-show-facepile="true">
-        <blockquote cite="https://www.facebook.com/share/1Az35L1w99/" class="fb-xfbml-parse-ignore">
-          <a href="https://www.facebook.com/share/1Az35L1w99/">داگرتنی پۆستەکان...</a>
-        </blockquote>
+    <!-- Telegram Feed Section -->
+    <div class="feed-container">
+      <div class="telegram-post-wrapper">
+        <!-- بەکارهێنانی Widgetی تیلیگرام بۆ پۆستەکانی akb_media -->
+        <script async src="https://telegram.org/js/telegram-widget.js?22" 
+                data-telegram-discussion="akb_media" 
+                data-comments-limit="5"
+                data-width="100%" 
+                data-userpic="true" 
+                data-color="24A1DE" 
+                data-dark="1">
+        </script>
       </div>
     </div>
+
+    <!-- Direct Channel Link Button -->
+    <a href="https://t.me/akb_media" target="_blank" class="btn-telegram">
+      سەردانی کەناڵی فەرمی AKB Media بکە لە تیلیگرام
+    </a>
   </div>
 
 </body>
