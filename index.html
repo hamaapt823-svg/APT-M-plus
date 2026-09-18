@@ -11,7 +11,6 @@
       --accent-color: #24A1DE;
       --border-color: #2a2e3d;
       --text-color: #ffffff;
-      --text-secondary: #a0a5b5;
     }
 
     * {
@@ -25,7 +24,7 @@
       color: var(--text-color);
       font-family: system-ui, -apple-system, sans-serif;
       direction: rtl;
-      padding: 15px;
+      padding: 10px;
     }
 
     .container {
@@ -38,9 +37,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 0;
+      padding: 12px 5px;
       border-bottom: 1px solid var(--border-color);
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
 
     .logo {
@@ -49,78 +48,37 @@
       color: var(--accent-color);
     }
 
-    .badge {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      color: var(--text-secondary);
-      font-size: 12px;
-      padding: 4px 10px;
-      border-radius: 20px;
-    }
-
-    /* Telegram Widget Box */
-    .telegram-card {
+    /* Feed Container */
+    .telegram-feed-wrapper {
+      width: 100%;
+      height: 82vh;
       background-color: var(--card-bg);
       border-radius: 12px;
-      padding: 15px;
       border: 1px solid var(--border-color);
-      display: flex;
-      justify-content: center;
-      min-height: 500px;
       overflow: hidden;
     }
 
-    .telegram-card iframe {
-      width: 100% !important;
-      border: none !important;
-    }
-
-    .btn-telegram {
-      display: block;
+    .telegram-feed-wrapper iframe {
       width: 100%;
-      text-align: center;
-      background-color: var(--accent-color);
-      color: #fff;
-      text-decoration: none;
-      padding: 12px;
-      border-radius: 8px;
-      font-weight: bold;
-      margin-top: 15px;
-      font-size: 14px;
+      height: 100%;
+      border: none;
     }
   </style>
 </head>
 <body>
 
   <div class="container">
+    <!-- Header -->
     <header>
       <div class="logo">APT M Plus</div>
-      <div class="badge">AKB Media</div>
+      <span style="font-size: 13px; color: var(--accent-color);">AKB Media</span>
     </header>
 
-    <div class="telegram-card">
-      <!-- بەکارهێنانی Frameی فەرمیی کەناڵی تیلیگرام بەبێ هەڵەی Discussion -->
-      <iframe src="https://tgwidget.com/widget/?id=65d75a133d1c2" width="100%" height="550" frameborder="0" scrolling="no" style="overflow:hidden;"></iframe>
+    <!-- Telegram Channel Web Feed -->
+    <div class="telegram-feed-wrapper">
+      <iframe src="https://t.me/s/akb_media" title="AKB Media Telegram Feed"></iframe>
     </div>
-
-    <!-- ئەگەر بڕیارە تەواوی کەناڵەکە بە ئاسانی بپشکنیت -->
-    <a href="https://t.me/s/akb_media" target="_blank" class="btn-telegram">
-      کردنەوەی گشت پۆستەکانی AKB Media
-    </a>
   </div>
 
-  <script>
-    // جێگیرکردنی scriptی فەرمی بۆ خویندنەوەی ویدمەتی پۆستی تاکی
-    const script = document.createElement('script');
-    script.src = "https://telegram.org/js/telegram-widget.js?22";
-    script.setAttribute('data-telegram-post', 'akb_media/2'); // یەکەم پۆست
-    script.setAttribute('data-width', '100%');
-    script.setAttribute('data-dark', '1');
-    script.async = true;
-    
-    const card = document.querySelector('.telegram-card');
-    card.innerHTML = ''; // پاککردنەوە
-    card.appendChild(script);
-  </script>
 </body>
 </html>
