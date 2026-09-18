@@ -124,16 +124,11 @@
       gap: 12px;
       text-decoration: none;
       color: #fff;
-      transition: transform 0.2s;
-    }
-
-    .news-card:hover {
-      border-color: var(--accent-color);
     }
 
     .news-card img {
-      width: 100px;
-      height: 80px;
+      width: 95px;
+      height: 75px;
       object-fit: cover;
       border-radius: 6px;
       flex-shrink: 0;
@@ -206,6 +201,14 @@
   <script>
     let articlesCache = [];
 
+    const feeds = {
+      all: 'https://www.kurdistan24.net/ckb/rss',
+      local: 'https://www.kurdistan24.net/ckb/rss/kurdistan',
+      world: 'https://www.kurdistan24.net/ckb/rss/world',
+      sports: 'https://www.kurdistan24.net/ckb/rss/sport',
+      economy: 'https://www.kurdistan24.net/ckb/rss/economy'
+    };
+
     async function loadNews(category, btn) {
       if (btn) {
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
@@ -215,18 +218,52 @@
       const container = document.getElementById('feedContainer');
       container.innerHTML = '<div class="status-msg">بارکردنی تازەترین هەواڵەکان...</div>';
 
+      const targetFeed = feeds[category] || feeds.all;
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetFeed)}`;
+
       try {
-        const response = await fetch(`/api/news?cat=${category}`);
+        const response = await fetch(proxyUrl);
         const data = await response.json();
 
-        if (data.status === 'success' && data.articles.length > 0) {
-          articlesCache = data.articles;
+        if (data.contents) {
+          const parser = new DOMParser();
+          const xmlDoc = parser.parseFromString(data.contents, "text/xml");
+          const items = xmlDoc.querySelectorAll("item");
+
+          articlesCache = [];
+          items.forEach(item => {
+            const title = item.querySelector("title")?.textContent || '';
+            const link = item.querySelector("link")?.textContent || '#';
+            const pubDate = item.querySelector("pubDate")?.textContent || '';
+            const rawDesc = item.querySelector("description")?.textContent || '';
+            
+            // وێنە
+            let img = '';
+            const enclosure = item.querySelector("enclosure");
+            if (enclosure) {
+              img = enclosure.getAttribute("url") || '';
+            }
+
+            // پاککردنەوەی پوختەکە
+            const tempDiv = document.createElement("div");
+            tempDiv.innerHTML = rawDesc;
+            const cleanDesc = tempDiv.textContent || tempDiv.innerText || '';
+
+            articlesCache.push({
+              title: title.trim(),
+              link: link.trim(),
+              date: pubDate,
+              description: cleanDesc.trim().slice(0, 150) + '...',
+              img: img
+            });
+          });
+
           displayArticles(articlesCache);
         } else {
-          container.innerHTML = '<div class="status-msg">هیچ هەواڵێک لەم بەشەدا نییە.</div>';
+          container.innerHTML = '<div class="status-msg">هیچ هەواڵێک نەدۆزرایەوە.</div>';
         }
       } catch (err) {
-        container.innerHTML = '<div class="status-msg">کێشە لە گرێدان ڕوویدا.</div>';
+        container.innerHTML = '<div class="status-msg">کێشە لە گرێدان ڕوویدا. تکایە پەڕەکە نوێ بکەرەوە.</div>';
       }
     }
 
@@ -249,7 +286,7 @@
 
         const imgTag = art.img 
           ? `<img src="${art.img}" alt="news" onerror="this.style.display='none'">` 
-          : '<div style="width:100px;height:80px;background:#1e222d;border-radius:6px;flex-shrink:0;"></div>';
+          : '<div style="width:95px;height:75px;background:#1e222d;border-radius:6px;flex-shrink:0;"></div>';
 
         card.innerHTML = `
           ${imgTag}
