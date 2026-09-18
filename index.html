@@ -202,12 +202,13 @@
   <script>
     let currentArticles = [];
 
+    // بەکارهێنانی Feed ی کراوە و بێ کێشەی RSS
     const FEEDS = {
-      all: 'https://www.rudaw.net/sorani/rss',
-      local: 'https://www.rudaw.net/sorani/kurdistan/rss',
-      world: 'https://www.rudaw.net/sorani/world/rss',
-      sports: 'https://www.rudaw.net/sorani/sports/rss',
-      economy: 'https://www.rudaw.net/sorani/business/rss'
+      all: 'https://www.kurdistan24.net/ckb/rss',
+      local: 'https://www.kurdistan24.net/ckb/rss/kurdistan',
+      world: 'https://www.kurdistan24.net/ckb/rss/world',
+      sports: 'https://www.kurdistan24.net/ckb/rss/sport',
+      economy: 'https://www.kurdistan24.net/ckb/rss/economy'
     };
 
     async function fetchCategory(catKey, btn) {
@@ -220,20 +221,41 @@
       container.innerHTML = '<div class="status-msg">بارکردنی هەواڵەکان...</div>';
 
       const feedUrl = FEEDS[catKey] || FEEDS.all;
-      const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`;
+      const proxyUrl = 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(feedUrl);
 
       try {
-        const res = await fetch(apiUrl);
-        const data = await res.json();
+        const res = await fetch(proxyUrl);
+        const xmlText = await res.text();
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+        const items = xmlDoc.querySelectorAll("item");
 
-        if (data.status === 'ok' && data.items && data.items.length > 0) {
-          currentArticles = data.items;
-          renderNews(currentArticles);
-        } else {
-          container.innerHTML = '<div class="status-msg">هیچ هەواڵێک بەردەست نییە.</div>';
-        }
+        currentArticles = [];
+        items.forEach((item, index) => {
+          if (index >= 20) return;
+
+          const title = item.querySelector("title")?.textContent || '';
+          const link = item.querySelector("link")?.textContent || '#';
+          const pubDateRaw = item.querySelector("pubDate")?.textContent || '';
+          
+          // وێنەکان
+          let imgUrl = '';
+          const enclosure = item.querySelector("enclosure");
+          const mediaContent = item.getElementsByTagName("media:content")[0];
+          if (enclosure) imgUrl = enclosure.getAttribute("url");
+          else if (mediaContent) imgUrl = mediaContent.getAttribute("url");
+
+          currentArticles.push({
+            title,
+            link,
+            img: imgUrl,
+            pubDate: pubDateRaw
+          });
+        });
+
+        renderNews(currentArticles);
       } catch (err) {
-        container.innerHTML = '<div class="status-msg">کێشەیەک ڕوویدا. تکایە دووبارە هەوڵبدەرەوە.</div>';
+        container.innerHTML = '<div class="status-msg">کێشەیەک لە بارکردندا ڕوویدا. دووبارە هەوڵبدەرەوە.</div>';
       }
     }
 
@@ -242,7 +264,7 @@
       container.innerHTML = '';
 
       if (articles.length === 0) {
-        container.innerHTML = '<div class="status-msg">هیچ هەواڵێک نەدۆزرایەوە.</div>';
+        container.innerHTML = '<div class="status-msg">هیچ هەواڵێک بەردەست نییە.</div>';
         return;
       }
 
@@ -253,13 +275,13 @@
         card.target = '_blank';
 
         const pubDate = art.pubDate ? new Date(art.pubDate).toLocaleString('ckb-IQ', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '';
-        const imgHtml = art.thumbnail ? `<img src="${art.thumbnail}" alt="news">` : '<div style="width:80px;height:60px;background:#1e222d;border-radius:6px;flex-shrink:0;"></div>';
+        const imgHtml = art.img ? `<img src="${art.img}" alt="news">` : '<div style="width:80px;height:60px;background:#1e222d;border-radius:6px;flex-shrink:0;"></div>';
 
         card.innerHTML = `
           ${imgHtml}
           <div class="news-content">
             <div>
-              <span class="news-source">ڕووداو</span>
+              <span class="news-source">هەواڵ</span>
               <h2 class="news-title">${art.title}</h2>
             </div>
             <span class="news-date">${pubDate}</span>
