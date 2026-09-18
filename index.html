@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>APT M+ | دەزگای میدیایی ئەی پـی تی</title>
+    <title>APT M+ | هەواڵەکانی ڕووداو</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -13,42 +13,35 @@
     <div id="root"></div>
 
     <script type="text/babel">
-      const { useState } = React;
+      const { useState, useEffect } = React;
 
       function App() {
+        const [news, setNews] = useState([]);
+        const [loading, setLoading] = useState(true);
         const [search, setSearch] = useState('');
-        const [activeTab, setActiveTab] = useState('all');
-        const [selectedNews, setSelectedNews] = useState(null);
 
-        const newsItems = [
-          { 
-            id: 1, 
-            title: 'کۆبوونەوەی لووتکەی ئابووری لە هەولێر بەڕێوەچوو', 
-            category: 'local', 
-            time: 'پێش ٥ خولەک', 
-            desc: 'تاوتوێکردنی بەهێزکردنی ژێرخانی ئابووری و سەرمایەگوزاری لە هەرێمی کوردستان.',
-            content: 'ئەمڕۆ لە شاری هەولێر بە ئامادەبوونی شارەزایانی ئابووری، کۆبوونەوەی لووتکەی ئابووری بەڕێوەچوو. لە کۆبوونەوەکەدا جەخت لەسەر بەرەوپێشبردنی کەرتی بازرگانی و ئاسانکاری بۆ وەبەرهێنەران کرایەوە.'
-          },
-          { 
-            id: 2, 
-            title: 'نوێترین بەرەوپێشچوونە تەکنەلۆژییەکانی جیهان', 
-            category: 'world', 
-            time: 'پێش ١٥ خولەک', 
-            desc: 'ڕاگەیاندنی وەشانی نوێی سیستەمە زیرەکەکان لە ئاستی نێودەوڵەتیدا.',
-            content: 'کۆمپانیا گەورەکانی جیهان لە بواری تەکنەلۆژیا زنجیرەیەک نوێکاری تازەیان لە سیستەمەکانی ژیریی دەستکرد ڕاگەیاند کە ئاسانکاری گەورە بۆ بەکارهێنەران دەکات.'
-          },
-          { 
-            id: 3, 
-            title: 'یاریگاکانی ئەوروپا خۆیان بۆ وەرزێکی گەرم ئامادە دەکەن', 
-            category: 'sports', 
-            time: 'پێش ١ کاتژمێر', 
-            desc: 'گرنگترین گواستنەوەکانی یاریزانان و ڕاهێنەران لە خولە گەورەکاندا.',
-            content: 'یانە گەورەکانی ئەوروپا لە سەرقاڵی کۆتاییهێنان بە بۆندەکانیانن بۆ بەهێزکردنی ڕیزی یانەکانیان بەرەو وەرزی نوێی خولە ناوخۆیی و ئەوروپییەکان.'
-          }
-        ];
+        useEffect(() => {
+          // هێنانی خۆکارانەی هەواڵە ڕاستەقینەکانی ڕووداو
+          const fetchRudawNews = async () => {
+            try {
+              const res = await fetch(
+                'https://api.rss2json.com/v1/api.json?rss_url=https://www.rudaw.net/sorani/rss'
+              );
+              const data = await res.json();
+              if (data.status === 'ok') {
+                setNews(data.items);
+              }
+            } catch (err) {
+              console.error('کێشە لە هێنانی هەواڵەکان:', err);
+            } finally {
+              setLoading(false);
+            }
+          };
 
-        const filteredNews = newsItems.filter(item => 
-          (activeTab === 'all' || item.category === activeTab) &&
+          fetchRudawNews();
+        }, []);
+
+        const filteredNews = news.filter(item =>
           item.title.toLowerCase().includes(search.toLowerCase())
         );
 
@@ -57,13 +50,13 @@
             {/* Header */}
             <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
               <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-3 cursor-pointer" onClick={() => {setSelectedNews(null); setActiveTab('all');}}>
+                <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-slate-950 border border-amber-500/40 flex items-center justify-center text-amber-400 font-bold text-xl shadow-lg shadow-amber-500/10">
                     ☀
                   </div>
                   <div>
                     <h1 className="text-xl font-bold tracking-wider text-amber-400">APT M+</h1>
-                    <p className="text-xs text-slate-400">دەزگای میدیایی ئەی پـی تی</p>
+                    <p className="text-xs text-slate-400">سەرچاوەی هەواڵەکان: ڕووداو (Rudaw)</p>
                   </div>
                 </div>
 
@@ -77,100 +70,72 @@
 
             {/* Main Section */}
             <main className="max-w-4xl mx-auto px-4 pt-8">
-              
-              {/* Modal / Detailed View */}
-              {selectedNews ? (
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 mt-4 animate-fade-in">
-                  <button 
-                    onClick={() => setSelectedNews(null)} 
-                    className="mb-6 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-xl text-sm font-bold transition flex items-center gap-2">
-                    ← بگەڕێوە بۆ لاپەڕەی سەرەکی
-                  </button>
-                  <span className="text-xs px-3 py-1 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                    {selectedNews.category === 'local' ? 'کوردستان' : selectedNews.category === 'world' ? 'نێودەوڵەتی' : 'وەرزش'}
-                  </span>
-                  <h2 className="text-2xl md:text-3xl font-black text-slate-100 my-4 leading-relaxed">{selectedNews.title}</h2>
-                  <p className="text-xs text-slate-500 mb-6">{selectedNews.time}</p>
-                  <p className="text-slate-300 text-base md:text-lg leading-loose">{selectedNews.content}</p>
+              <div className="text-center">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-6 text-sm">
+                  <span>🔴 live</span>
+                  <span>هەواڵە خێراکانی ڕووداو</span>
+                </div>
+
+                <h2 className="text-3xl md:text-5xl font-black text-slate-100 mb-6 leading-tight">
+                  سەرچاوەی زانیاری و هەواڵە خێراکان
+                </h2>
+
+                {/* Search Bar */}
+                <div className="relative max-w-xl mx-auto mb-8">
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="گەڕان لە ناو هەواڵەکانی ڕووداودا..."
+                    className="w-full bg-slate-900 border border-slate-800 rounded-2xl py-4 px-5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500/50 shadow-xl transition"
+                  />
+                </div>
+              </div>
+
+              {/* Feed Display */}
+              {loading ? (
+                <div className="text-center py-20 text-amber-400 animate-pulse font-bold">
+                  خەریکی بارکردنی نوێترین هەواڵەکانی ڕووداوە...
                 </div>
               ) : (
-                <>
-                  <div className="text-center">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-6 text-sm">
-                      <span>✦</span>
-                      <span>سەکۆی سەرەکی هەواڵەکانی APT M+</span>
-                    </div>
-
-                    <h2 className="text-3xl md:text-5xl font-black text-slate-100 mb-6 leading-tight">
-                      سەرچاوەی زانیاری و هەواڵە خێراکان
-                    </h2>
-
-                    {/* Search Bar */}
-                    <div className="relative max-w-xl mx-auto mb-8">
-                      <input
-                        type="text"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="گەڕان لە ناو هەواڵەکاندا..."
-                        className="w-full bg-slate-900 border border-slate-800 rounded-2xl py-4 px-5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500/50 shadow-xl transition"
-                      />
-                    </div>
-
-                    {/* Filter Buttons */}
-                    <div className="flex justify-center gap-2 mb-10 overflow-x-auto pb-2">
-                      <button 
-                        onClick={() => setActiveTab('all')}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium transition cursor-pointer ${activeTab === 'all' ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'}`}>
-                        هەموو هەواڵەکان
-                      </button>
-                      <button 
-                        onClick={() => setActiveTab('local')}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium transition cursor-pointer ${activeTab === 'local' ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'}`}>
-                        کوردستان
-                      </button>
-                      <button 
-                        onClick={() => setActiveTab('world')}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium transition cursor-pointer ${activeTab === 'world' ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'}`}>
-                        نێودەوڵەتی
-                      </button>
-                      <button 
-                        onClick={() => setActiveTab('sports')}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium transition cursor-pointer ${activeTab === 'sports' ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'}`}>
-                        وەرزش
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* News Interactive Grid */}
-                  <div className="grid md:grid-cols-2 gap-6 text-right">
-                    {filteredNews.length > 0 ? (
-                      filteredNews.map((news) => (
-                        <div 
-                          key={news.id} 
-                          onClick={() => setSelectedNews(news)}
-                          className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 hover:border-amber-500/50 hover:bg-slate-900 transition active:scale-[0.98] cursor-pointer flex flex-col justify-between group shadow-lg">
+                <div className="grid md:grid-cols-2 gap-6 text-right">
+                  {filteredNews.length > 0 ? (
+                    filteredNews.map((item, index) => (
+                      <a
+                        key={index}
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden hover:border-amber-500/50 hover:bg-slate-900 transition active:scale-[0.98] flex flex-col justify-between group shadow-lg"
+                      >
+                        {item.enclosure && item.enclosure.link && (
+                          <img
+                            src={item.enclosure.link}
+                            alt={item.title}
+                            className="w-full h-48 object-cover group-hover:scale-105 transition duration-300"
+                          />
+                        )}
+                        <div className="p-5 flex-1 flex flex-col justify-between">
                           <div>
-                            <div className="flex justify-between items-center mb-3">
-                              <span className="text-xs px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                                {news.category === 'local' ? 'کوردستان' : news.category === 'world' ? 'نێودەوڵەتی' : 'وەرزش'}
-                              </span>
-                              <span className="text-xs text-slate-500">{news.time}</span>
+                            <div className="text-xs text-amber-400 mb-2 font-medium">
+                              {new Date(item.pubDate).toLocaleString('kmr-IQ')}
                             </div>
-                            <h3 className="text-lg font-bold mb-2 text-slate-100 group-hover:text-amber-400 transition">{news.title}</h3>
-                            <p className="text-slate-400 text-sm leading-relaxed">{news.desc}</p>
+                            <h3 className="text-lg font-bold mb-2 text-slate-100 group-hover:text-amber-400 transition leading-snug">
+                              {item.title}
+                            </h3>
                           </div>
-                          <div className="mt-5 text-xs font-semibold text-amber-400 flex items-center gap-1 group-hover:translate-x-[-4px] transition-all">
-                            خوێندنەوەی تەواوی هەواڵەکە ←
+                          <div className="mt-4 text-xs font-semibold text-amber-400 flex items-center gap-1">
+                            خوێندنەوەی تەواوی دەقەکە لە ڕووداو ←
                           </div>
                         </div>
-                      ))
-                    ) : (
-                      <div className="col-span-2 py-12 text-center text-slate-500">
-                        هیچ هەواڵێک بەم ناونیشانە نەدۆزرایەوە...
-                      </div>
-                    )}
-                  </div>
-                </>
+                      </a>
+                    ))
+                  ) : (
+                    <div className="col-span-2 py-12 text-center text-slate-500">
+                      هیچ هەواڵێک نەدۆزرایەوە...
+                    </div>
+                  )}
+                </div>
               )}
             </main>
           </div>
