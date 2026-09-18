@@ -185,77 +185,84 @@
     <div class="main-layout">
       <!-- بەشەکان لە خوار یەک لە لای ڕاست -->
       <aside class="sidebar-categories">
-        <button class="cat-btn active" onclick="fetchCategory('all', this)">هەمووی</button>
-        <button class="cat-btn" onclick="fetchCategory('local', this)">هەواڵی ناوخۆیی</button>
-        <button class="cat-btn" onclick="fetchCategory('world', this)">هەواڵی جیهانی</button>
-        <button class="cat-btn" onclick="fetchCategory('sports', this)">هەواڵی وەرزشی</button>
-        <button class="cat-btn" onclick="fetchCategory('economy', this)">هەواڵی ئابووری</button>
+        <button class="cat-btn active" onclick="switchCategory('all', this)">هەمووی</button>
+        <button class="cat-btn" onclick="switchCategory('local', this)">هەواڵی ناوخۆیی</button>
+        <button class="cat-btn" onclick="switchCategory('world', this)">هەواڵی جیهانی</button>
+        <button class="cat-btn" onclick="switchCategory('sports', this)">هەواڵی وەرزشی</button>
+        <button class="cat-btn" onclick="switchCategory('economy', this)">هەواڵی ئابووری</button>
       </aside>
 
       <!-- شوێنی هەواڵەکان -->
       <main class="feed-container" id="feedContainer">
-        <div id="status" class="status-msg">بارکردنی هەواڵەکان...</div>
+        <div id="status" class="status-msg">بارکردنی هەواڵەکان لە سەرچاوە جیاوازەکانەوە...</div>
       </main>
     </div>
   </div>
 
   <script>
-    let currentArticles = [];
+    let allNews = [];
+    let activeCategory = 'all';
 
-    // بەکارهێنانی Feed ی کراوە و بێ کێشەی RSS
-    const FEEDS = {
-      all: 'https://www.kurdistan24.net/ckb/rss',
-      local: 'https://www.kurdistan24.net/ckb/rss/kurdistan',
-      world: 'https://www.kurdistan24.net/ckb/rss/world',
-      sports: 'https://www.kurdistan24.net/ckb/rss/sport',
-      economy: 'https://www.kurdistan24.net/ckb/rss/economy'
-    };
+    // هێنانی هەواڵەکان لە چەندین سەرچاوەی کراوەوە
+    const SOURCES = [
+      { name: 'کوردستان ٢٤', url: 'https://www.kurdistan24.net/ckb/rss', cat: 'local' },
+      { name: 'کوردستان 24 - وەرزش', url: 'https://www.kurdistan24.net/ckb/rss/sport', cat: 'sports' },
+      { name: 'کوردستان 24 - جیهان', url: 'https://www.kurdistan24.net/ckb/rss/world', cat: 'world' },
+      { name: 'کوردستان 24 - ئابووری', url: 'https://www.kurdistan24.net/ckb/rss/economy', cat: 'economy' },
+      { name: 'کەی ئێن ئێن (KNN)', url: 'https://knnc.net/rss', cat: 'local' }
+    ];
 
-    async function fetchCategory(catKey, btn) {
-      if(btn) {
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-      }
-
+    async function loadAllSources() {
       const container = document.getElementById('feedContainer');
-      container.innerHTML = '<div class="status-msg">بارکردنی هەواڵەکان...</div>';
+      allNews = [];
 
-      const feedUrl = FEEDS[catKey] || FEEDS.all;
-      const proxyUrl = 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(feedUrl);
+      let promises = SOURCES.map(async (src) => {
+        try {
+          const proxyUrl = 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(src.url);
+          const res = await fetch(proxyUrl);
+          const xmlText = await res.text();
+          const parser = new DOMParser();
+          const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+          const items = xmlDoc.querySelectorAll("item");
 
-      try {
-        const res = await fetch(proxyUrl);
-        const xmlText = await res.text();
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-        const items = xmlDoc.querySelectorAll("item");
+          items.forEach((item, index) => {
+            if (index >= 8) return;
 
-        currentArticles = [];
-        items.forEach((item, index) => {
-          if (index >= 20) return;
+            const title = item.querySelector("title")?.textContent || '';
+            const link = item.querySelector("link")?.textContent || '#';
+            const pubDateRaw = item.querySelector("pubDate")?.textContent || '';
 
-          const title = item.querySelector("title")?.textContent || '';
-          const link = item.querySelector("link")?.textContent || '#';
-          const pubDateRaw = item.querySelector("pubDate")?.textContent || '';
-          
-          // وێنەکان
-          let imgUrl = '';
-          const enclosure = item.querySelector("enclosure");
-          const mediaContent = item.getElementsByTagName("media:content")[0];
-          if (enclosure) imgUrl = enclosure.getAttribute("url");
-          else if (mediaContent) imgUrl = mediaContent.getAttribute("url");
+            let imgUrl = '';
+            const enclosure = item.querySelector("enclosure");
+            const mediaContent = item.getElementsByTagName("media:content")[0];
+            if (enclosure) imgUrl = enclosure.getAttribute("url");
+            else if (mediaContent) imgUrl = mediaContent.getAttribute("url");
 
-          currentArticles.push({
-            title,
-            link,
-            img: imgUrl,
-            pubDate: pubDateRaw
+            if (title) {
+              allNews.push({
+                source: src.name,
+                category: src.cat,
+                title,
+                link,
+                img: imgUrl,
+                date: pubDateRaw ? new Date(pubDateRaw) : new Date()
+              });
+            }
           });
-        });
+        } catch (e) {
+          console.log('سەرچاوەیەک لۆد نەبوو:', src.name);
+        }
+      });
 
-        renderNews(currentArticles);
-      } catch (err) {
-        container.innerHTML = '<div class="status-msg">کێشەیەک لە بارکردندا ڕوویدا. دووبارە هەوڵبدەرەوە.</div>';
+      await Promise.all(promises);
+
+      // ڕێکخستنی هەواڵەکان بەپێی کات (تازەترین لە سەرەوە)
+      allNews.sort((a, b) => b.date - a.date);
+
+      if (allNews.length === 0) {
+        container.innerHTML = '<div class="status-msg">کێشەیەک لە بارکردنی هەواڵەکان ڕوویدا.</div>';
+      } else {
+        renderNews(allNews);
       }
     }
 
@@ -274,14 +281,14 @@
         card.href = art.link;
         card.target = '_blank';
 
-        const pubDate = art.pubDate ? new Date(art.pubDate).toLocaleString('ckb-IQ', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '';
+        const pubDate = art.date ? art.date.toLocaleString('ckb-IQ', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '';
         const imgHtml = art.img ? `<img src="${art.img}" alt="news">` : '<div style="width:80px;height:60px;background:#1e222d;border-radius:6px;flex-shrink:0;"></div>';
 
         card.innerHTML = `
           ${imgHtml}
           <div class="news-content">
             <div>
-              <span class="news-source">هەواڵ</span>
+              <span class="news-source">${art.source}</span>
               <h2 class="news-title">${art.title}</h2>
             </div>
             <span class="news-date">${pubDate}</span>
@@ -291,13 +298,29 @@
       });
     }
 
+    function switchCategory(cat, btn) {
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeCategory = cat;
+
+      if (cat === 'all') {
+        renderNews(allNews);
+      } else {
+        const filtered = allNews.filter(item => item.category === cat);
+        renderNews(filtered);
+      }
+    }
+
     function executeSearch() {
       const query = document.getElementById('searchInput').value.trim().toLowerCase();
+      let list = activeCategory === 'all' ? allNews : allNews.filter(i => i.category === activeCategory);
+
       if (!query) {
-        renderNews(currentArticles);
+        renderNews(list);
         return;
       }
-      const filtered = currentArticles.filter(art => art.title.toLowerCase().includes(query));
+
+      const filtered = list.filter(art => art.title.toLowerCase().includes(query));
       renderNews(filtered);
     }
 
@@ -305,7 +328,7 @@
       if (e.key === 'Enter') executeSearch();
     });
 
-    fetchCategory('all');
+    loadAllSources();
   </script>
 </body>
 </html>
