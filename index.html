@@ -24,7 +24,7 @@
       padding: 15px;
     }
 
-    .container { max-width: 650px; margin: 0 auto; }
+    .container { max-width: 800px; margin: 0 auto; }
 
     /* هێدەری جێگیر */
     header {
@@ -47,11 +47,11 @@
       font-weight: bold;
     }
 
-    /* بەشی گەڕانی چالاک (Search Bar + Button) */
+    /* بەشی گەڕان */
     .search-container {
       display: flex;
       gap: 8px;
-      margin-bottom: 15px;
+      margin-bottom: 20px;
     }
 
     .search-input {
@@ -78,26 +78,30 @@
       font-size: 13px;
     }
 
-    /* تابەکانی پۆلێنکردنی هەواڵ (Categories) */
-    .categories {
+    /* داڕشتنی سەرەکی: بەشەکان لە ڕاست + هەواڵەکان لە چەپ */
+    .main-layout {
       display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding-bottom: 10px;
-      margin-bottom: 15px;
-      scrollbar-width: none; /* بۆ شاراوەیی scrollbar لە فایرفۆکس */
+      gap: 15px;
+      align-items: flex-start;
     }
 
-    .categories::-webkit-scrollbar { display: none; } /* بۆ شوێنەکانی تر */
+    /* بەشەکان (لە لای ڕاست و لە خوار یەک) */
+    .sidebar-categories {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 140px;
+      flex-shrink: 0;
+    }
 
     .cat-btn {
       background-color: var(--card-bg);
       color: var(--text-secondary);
       border: 1px solid var(--border-color);
-      padding: 8px 14px;
-      border-radius: 20px;
+      padding: 10px 12px;
+      border-radius: 8px;
       font-size: 12px;
-      white-space: nowrap;
+      text-align: right;
       cursor: pointer;
       transition: 0.2s;
     }
@@ -108,11 +112,13 @@
       border-color: var(--accent-color);
     }
 
-    /* لۆدینگ و پەیامەکان */
-    .status-msg { text-align: center; padding: 40px; color: var(--text-secondary); font-size: 13px; }
-
-    /* کارتەکانی هەواڵ */
-    .feed-grid { display: flex; flex-direction: column; gap: 12px; }
+    /* ناوەڕۆکی هەواڵەکان */
+    .feed-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
 
     .news-card {
       background-color: var(--card-bg);
@@ -126,8 +132,8 @@
     }
 
     .news-card img {
-      width: 90px;
-      height: 70px;
+      width: 85px;
+      height: 65px;
       object-fit: cover;
       border-radius: 8px;
       flex-shrink: 0;
@@ -151,49 +157,66 @@
       font-size: 13px;
       line-height: 1.4;
       color: #f1f1f1;
-      margin-top: 4px;
+      margin-top: 2px;
     }
 
     .news-date {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--text-secondary);
-      margin-top: 6px;
+      margin-top: 4px;
+    }
+
+    .status-msg { text-align: center; padding: 30px; color: var(--text-secondary); font-size: 13px; width: 100%; }
+
+    /* گونجاندنی شاشەی موبایل (دەبێتە سەر و خوار لە شاشەی زۆر بچووک) */
+    @media (max-width: 480px) {
+      .main-layout {
+        flex-direction: column;
+      }
+      .sidebar-categories {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+      }
+      .cat-btn {
+        white-space: nowrap;
+      }
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <!-- هێدەری جێگیر -->
     <header>
       <div class="logo">APT M Plus</div>
       <div class="live-tag">LIVE</div>
     </header>
 
-    <!-- گەڕان بە دوگمەی سێرچ -->
     <div class="search-container">
       <input type="text" id="searchInput" class="search-input" placeholder="گەڕان بەدوای هەواڵدا...">
       <button class="search-btn" onclick="executeSearch()">سێرچ</button>
     </div>
 
-    <!-- پۆلێنکردنی هەواڵەکان -->
-    <div class="categories">
-      <button class="cat-btn active" onclick="switchCategory('all', this)">هەمووی</button>
-      <button class="cat-btn" onclick="switchCategory('local', this)">هەواڵی ناوخۆیی</button>
-      <button class="cat-btn" onclick="switchCategory('world', this)">هەواڵی جیهانی</button>
-      <button class="cat-btn" onclick="switchCategory('sports', this)">هەواڵی وەرزشی</button>
-      <button class="cat-btn" onclick="switchCategory('economy', this)">هەواڵی ئابووری</button>
-    </div>
+    <div class="main-layout">
+      <!-- بەشەکان لە لای ڕاست لە خوار یەک -->
+      <aside class="sidebar-categories">
+        <button class="cat-btn active" onclick="switchCategory('all', this)">هەمووی</button>
+        <button class="cat-btn" onclick="switchCategory('local', this)">هەواڵی ناوخۆیی</button>
+        <button class="cat-btn" onclick="switchCategory('world', this)">هەواڵی جیهانی</button>
+        <button class="cat-btn" onclick="switchCategory('sports', this)">هەواڵی وەرزشی</button>
+        <button class="cat-btn" onclick="switchCategory('economy', this)">هەواڵی ئابووری</button>
+      </aside>
 
-    <!-- شوێنی هەواڵەکان -->
-    <div id="status" class="status-msg">بارکردنی هەواڵەکان...</div>
-    <div id="feedContainer" class="feed-grid"></div>
+      <!-- بەشی پێشاندانی هەواڵەکان -->
+      <main class="feed-container" id="feedContainer">
+        <div id="status" class="status-msg">بارکردنی هەواڵەکان...</div>
+      </main>
+    </div>
   </div>
 
   <script>
     let allArticles = [];
 
-    // هێنانی هەواڵەکان لە RSS بە پرۆکسی
     async function loadNews() {
       const statusEl = document.getElementById('status');
       try {
@@ -203,11 +226,9 @@
         const xmlDoc = parser.parseFromString(xmlText, "text/xml");
         const items = xmlDoc.querySelectorAll("item");
 
-        statusEl.style.display = 'none';
-
         allArticles = [];
         items.forEach((item, index) => {
-          if (index >= 25) return;
+          if (index >= 20) return;
 
           const title = item.querySelector("title")?.textContent || '';
           const link = item.querySelector("link")?.textContent || '#';
@@ -225,23 +246,18 @@
 
         renderNews(allArticles);
       } catch (err) {
-        statusEl.innerText = 'کێشەیەک لە بارکردنی هەواڵەکان ڕوویدا.';
+        if(statusEl) statusEl.innerText = 'کێشەیەک لە بارکردنی هەواڵەکان ڕوویدا.';
       }
     }
 
-    // پێشاندانی هەواڵەکان
     function renderNews(articles) {
       const container = document.getElementById('feedContainer');
-      const statusEl = document.getElementById('status');
       container.innerHTML = '';
 
       if (articles.length === 0) {
-        statusEl.style.display = 'block';
-        statusEl.innerText = 'هیچ هەواڵێک نەدۆزرایەوە.';
+        container.innerHTML = '<div class="status-msg">هیچ هەواڵێک نەدۆزرایەوە.</div>';
         return;
       }
-
-      statusEl.style.display = 'none';
 
       articles.forEach(art => {
         const card = document.createElement('a');
@@ -250,13 +266,13 @@
         card.target = '_blank';
 
         const pubDate = art.date.toLocaleString('ckb-IQ', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' });
-        const imgHtml = art.img ? `<img src="${art.img}" alt="news">` : '<div style="width:90px;height:70px;background:#1e222d;border-radius:8px;flex-shrink:0;"></div>';
+        const imgHtml = art.img ? `<img src="${art.img}" alt="news">` : '<div style="width:85px;height:65px;background:#1e222d;border-radius:8px;flex-shrink:0;"></div>';
 
         card.innerHTML = `
           ${imgHtml}
           <div class="news-content">
             <div>
-              <span class="news-source">هەواڵ</span>
+              <span class="news-source">ڕووداو</span>
               <h2 class="news-title">${art.title}</h2>
             </div>
             <span class="news-date">${pubDate}</span>
@@ -266,7 +282,6 @@
       });
     }
 
-    // فرمانی سێرچ بە فشارداگرتنی دوگمەکە یان Enter
     function executeSearch() {
       const query = document.getElementById('searchInput').value.trim().toLowerCase();
       if (!query) {
@@ -278,23 +293,13 @@
     }
 
     document.getElementById('searchInput').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        executeSearch();
-      }
+      if (e.key === 'Enter') executeSearch();
     });
 
-    // گۆڕینی بەشەکان (Categories)
     function switchCategory(cat, btn) {
       document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-
-      // لە کاتی بەستنەوەی سەرچاوەی جیاوازدا لێرەوە فیلتەر یان Fetch دەکرێت
-      if (cat === 'all') {
-        renderNews(allArticles);
-      } else {
-        // فلتەرکردنی سادە بۆ تاپیکەکان (دەتوانیت دواتر RSSی تایبەت بە هەر بەشێک دابنێیت)
-        renderNews(allArticles);
-      }
+      renderNews(allArticles);
     }
 
     loadNews();
