@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>APT M Plus - Rudaw Sorani</title>
+  <title>APT M Plus - هەواڵە زیندوەکان</title>
   <style>
     :root {
       --bg-color: #090a0f;
@@ -36,13 +36,21 @@
     }
 
     .logo { font-size: 18px; font-weight: bold; color: var(--accent-color); }
-    .badge {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border-color);
-      color: var(--text-secondary);
-      font-size: 12px;
-      padding: 4px 10px;
-      border-radius: 20px;
+    
+    .live-tag {
+      background-color: var(--accent-color);
+      color: #fff;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: bold;
+      animation: blink 1.5s infinite;
+    }
+
+    @keyframes blink {
+      0% { opacity: 1; }
+      50% { opacity: 0.4; }
+      100% { opacity: 1; }
     }
 
     .feed-grid { display: flex; flex-direction: column; gap: 15px; }
@@ -56,11 +64,16 @@
       gap: 12px;
       text-decoration: none;
       color: #fff;
+      transition: border-color 0.2s;
+    }
+
+    .news-card:hover {
+      border-color: var(--accent-color);
     }
 
     .news-card img {
-      width: 110px;
-      height: 80px;
+      width: 100px;
+      height: 75px;
       object-fit: cover;
       border-radius: 8px;
       flex-shrink: 0;
@@ -73,8 +86,15 @@
       flex: 1;
     }
 
+    .news-source {
+      font-size: 11px;
+      color: var(--accent-color);
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
     .news-title {
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1.5;
       color: #f1f1f1;
     }
@@ -82,13 +102,10 @@
     .news-date {
       font-size: 11px;
       color: var(--text-secondary);
+      margin-top: 6px;
     }
 
-    .loading, .error {
-      text-align: center;
-      padding: 40px;
-      color: var(--text-secondary);
-    }
+    .loading { text-align: center; padding: 40px; color: var(--text-secondary); }
   </style>
 </head>
 <body>
@@ -96,75 +113,108 @@
   <div class="container">
     <header>
       <div class="logo">APT M Plus</div>
-      <div class="badge">Rudaw Sorani</div>
+      <div class="live-tag">LIVE - چرکە بە چرکە</div>
     </header>
 
-    <div id="loading" class="loading">داگرتنی دوایین هەواڵەکانی ڕووداو...</div>
-    <div id="error" class="error" style="display: none; color: var(--accent-color);"></div>
+    <div id="loading" class="loading">داگرتنی نوێترین هەواڵەکانی کوردستان و جیهان...</div>
     <div id="feedContainer" class="feed-grid"></div>
   </div>
 
   <script>
-    const RUDAW_RSS = 'https://www.rudaw.net/sorani/rss';
-    // بەکارهێنانی proxy بێ کێشەی Allorigins
-    const PROXY_URL = `https://api.allorigins.win/get?url=${encodeURIComponent(RUDAW_RSS)}`;
+    const SOURCES = [
+      { name: 'ڕووداو', url: 'https://www.rudaw.net/sorani/rss' },
+      { name: 'کوردستان ٢٤', url: 'https://www.kurdistan24.net/ku/rss' }
+    ];
 
-    async function fetchRudawNews() {
-      try {
-        const res = await fetch(PROXY_URL);
-        const data = await res.json();
+    async function fetchLiveNews() {
+      let allArticles = [];
 
-        document.getElementById('loading').style.display = 'none';
+      for (const source of SOURCES) {
+        try {
+          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(source.url)}`;
+          const res = await fetch(proxyUrl);
+          const data = await res.json();
 
-        if (data.contents) {
-          const parser = new DOMParser();
-          const xmlDoc = parser.parseFromString(data.contents, "text/xml");
-          const items = xmlDoc.querySelectorAll("item");
-          const container = document.getElementById('feedContainer');
+          if (data.contents) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(data.contents, "text/xml");
+            const items = xmlDoc.querySelectorAll("item");
 
-          items.forEach((item, index) => {
-            if(index >= 15) return; // تەنها ١٥ هەواڵی سەرەکی
+            items.forEach((item, index) => {
+              if (index >= 12) return; 
 
-            const title = item.querySelector("title")?.textContent || '';
-            const link = item.querySelector("link")?.textContent || '#';
-            const pubDateRaw = item.querySelector("pubDate")?.textContent || '';
-            
-            // دۆزینەوەی بەستەری وێنە
-            let imgUrl = '';
-            const enclosure = item.querySelector("enclosure");
-            if (enclosure) {
-              imgUrl = enclosure.getAttribute("url");
-            }
+              const title = item.querySelector("title")?.textContent || '';
+              const link = item.querySelector("link")?.textContent || '#';
+              const pubDateRaw = item.querySelector("pubDate")?.textContent || '';
+              
+              // دەرهێنانی وێنەی هەواڵەکە
+              let imgUrl = '';
+              const enclosure = item.querySelector("enclosure");
+              const mediaContent = item.getElementsByTagName("media:content")[0];
+              
+              if (enclosure) {
+                imgUrl = enclosure.getAttribute("url");
+              } else if (mediaContent) {
+                imgUrl = mediaContent.getAttribute("url");
+              }
 
-            const pubDate = pubDateRaw ? new Date(pubDateRaw).toLocaleString('ckb-IQ', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '';
-            const imgHtml = imgUrl ? `<img src="${imgUrl}" alt="Rudaw">` : '<div style="width:110px;height:80px;background:#222;border-radius:8px;"></div>';
-
-            const card = document.createElement('a');
-            card.className = 'news-card';
-            card.href = link;
-            card.target = '_blank';
-
-            card.innerHTML = `
-              ${imgHtml}
-              <div class="news-content">
-                <h2 class="news-title">${title}</h2>
-                <span class="news-date">${pubDate}</span>
-              </div>
-            `;
-            container.appendChild(card);
-          });
-        } else {
-          throw new Error('نەنێردرا');
+              if (title) {
+                allArticles.push({
+                  source: source.name,
+                  title: title,
+                  link: link,
+                  img: imgUrl,
+                  date: pubDateRaw ? new Date(pubDateRaw) : new Date(0)
+                });
+              }
+            });
+          }
+        } catch (e) {
+          console.error('کێشە لە بارکردنی سەرچاوەی:', source.name);
         }
-      } catch (err) {
-        document.getElementById('loading').style.display = 'none';
-        const errDiv = document.getElementById('error');
-        errDiv.style.display = 'block';
-        errDiv.innerText = 'کێشەیەک لە بارکردنی هەواڵەکان ڕوویدا.';
       }
+
+      document.getElementById('loading').style.display = 'none';
+
+      // ڕێکخستنی هەموو هەواڵەکان بەپێی کات (نوێترین لە سەرەوە)
+      allArticles.sort((a, b) => b.date - a.date);
+
+      renderNews(allArticles);
     }
 
-    fetchRudawNews();
+    function renderNews(articles) {
+      const container = document.getElementById('feedContainer');
+      container.innerHTML = '';
+
+      if (articles.length === 0) {
+        container.innerHTML = '<div class="loading">هیچ هەواڵێک بەردەست نییە لەم کاتەدا.</div>';
+        return;
+      }
+
+      articles.forEach(art => {
+        const card = document.createElement('a');
+        card.className = 'news-card';
+        card.href = art.link;
+        card.target = '_blank';
+
+        const pubDate = art.date.valueOf() !== 0 ? art.date.toLocaleString('ckb-IQ', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '';
+        const imgHtml = art.img ? `<img src="${art.img}" alt="News">` : '<div style="width:100px;height:75px;background:#1e222d;border-radius:8px;flex-shrink:0;"></div>';
+
+        card.innerHTML = `
+          ${imgHtml}
+          <div class="news-content">
+            <div>
+              <span class="news-source">${art.source}</span>
+              <h2 class="news-title">${art.title}</h2>
+            </div>
+            <span class="news-date">${pubDate}</span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    fetchLiveNews();
   </script>
 </body>
 </html>
