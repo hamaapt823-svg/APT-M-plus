@@ -21,19 +21,44 @@
         const [search, setSearch] = useState('');
 
         useEffect(() => {
-          // هێنانی خۆکارانەی هەواڵە ڕاستەقینەکانی ڕووداو
           const fetchRudawNews = async () => {
             try {
-              const res = await fetch(
-                'https://api.rss2json.com/v1/api.json?rss_url=https://www.rudaw.net/sorani/rss'
-              );
+              // بەکارهێنانی پڕۆکسی بۆ تێپەڕاندنی پارێزگاریی وێبگەڕ
+              const targetUrl = encodeURIComponent('https://www.rudaw.net/sorani/rss');
+              const res = await fetch(`https://api.allorigins.win/get?url=${targetUrl}`);
               const data = await res.json();
-              if (data.status === 'ok') {
-                setNews(data.items);
+              
+              if (data.contents) {
+                const parser = new DOMParser();
+                const xml = parser.parseFromString(data.contents, "text/xml");
+                const items = xml.querySelectorAll("item");
+                
+                const parsedNews = Array.from(items).map(item => {
+                  const title = item.querySelector("title")?.textContent || '';
+                  const link = item.querySelector("link")?.textContent || '#';
+                  const pubDate = item.querySelector("pubDate")?.textContent || '';
+                  const description = item.querySelector("description")?.textContent || '';
+                  
+                  // دەرهێنانی وێنە لە ناو کانتێنتەکەدا
+                  const enclosure = item.querySelector("enclosure");
+                  let imageUrl = enclosure ? enclosure.getAttribute("url") : '';
+                  
+                  if (!imageUrl) {
+                    const imgMatch = description.match(/src="([^"]+)"/);
+                    if (imgMatch) imageUrl = imgMatch[1];
+                  }
+
+                  // پاککردنەوەی دەقی کورتە
+                  const cleanDesc = description.replace(/<[^>]*>?/gm, '');
+
+                  return { title, link, pubDate, cleanDesc, imageUrl };
+                });
+
+                setNews(parsedNews);
               }
             } catch (err) {
               console.error('کێشە لە هێنانی هەواڵەکان:', err);
-            } finally {
+            } font-bold {
               setLoading(false);
             }
           };
@@ -72,8 +97,8 @@
             <main className="max-w-4xl mx-auto px-4 pt-8">
               <div className="text-center">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-6 text-sm">
-                  <span>🔴 live</span>
-                  <span>هەواڵە خێراکانی ڕووداو</span>
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                  <span>هەواڵە زۆر تازەکانی ڕووداو</span>
                 </div>
 
                 <h2 className="text-3xl md:text-5xl font-black text-slate-100 mb-6 leading-tight">
@@ -92,10 +117,11 @@
                 </div>
               </div>
 
-              {/* Feed Display */}
+              {/* News Display Feed */}
               {loading ? (
-                <div className="text-center py-20 text-amber-400 animate-pulse font-bold">
-                  خەریکی بارکردنی نوێترین هەواڵەکانی ڕووداوە...
+                <div className="text-center py-20 text-amber-400 font-bold flex flex-col items-center justify-center gap-3">
+                  <div className="w-8 h-8 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+                  <span>خەریکی کۆکردنەوەی نوێترین هەواڵەکانی ڕووداوە...</span>
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 gap-6 text-right">
@@ -108,9 +134,9 @@
                         rel="noopener noreferrer"
                         className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden hover:border-amber-500/50 hover:bg-slate-900 transition active:scale-[0.98] flex flex-col justify-between group shadow-lg"
                       >
-                        {item.enclosure && item.enclosure.link && (
+                        {item.imageUrl && (
                           <img
-                            src={item.enclosure.link}
+                            src={item.imageUrl}
                             alt={item.title}
                             className="w-full h-48 object-cover group-hover:scale-105 transition duration-300"
                           />
@@ -118,14 +144,17 @@
                         <div className="p-5 flex-1 flex flex-col justify-between">
                           <div>
                             <div className="text-xs text-amber-400 mb-2 font-medium">
-                              {new Date(item.pubDate).toLocaleString('kmr-IQ')}
+                              {item.pubDate ? new Date(item.pubDate).toLocaleString('kmr-IQ') : 'تازە'}
                             </div>
                             <h3 className="text-lg font-bold mb-2 text-slate-100 group-hover:text-amber-400 transition leading-snug">
                               {item.title}
                             </h3>
+                            <p className="text-slate-400 text-xs line-clamp-2 leading-relaxed">
+                              {item.cleanDesc}
+                            </p>
                           </div>
                           <div className="mt-4 text-xs font-semibold text-amber-400 flex items-center gap-1">
-                            خوێندنەوەی تەواوی دەقەکە لە ڕووداو ←
+                            خوێندنەوە لە ڕووداو ←
                           </div>
                         </div>
                       </a>
