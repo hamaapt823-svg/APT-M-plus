@@ -8,7 +8,7 @@
     :root {
       --bg-color: #090a0f;
       --card-bg: #161922;
-      --accent-color: #24A1DE; /* ڕەنگی تیلیگرام */
+      --accent-color: #24A1DE;
       --border-color: #2a2e3d;
       --text-color: #ffffff;
       --text-secondary: #a0a5b5;
@@ -58,25 +58,23 @@
       border-radius: 20px;
     }
 
-    /* Feed Container */
-    .feed-container {
+    /* Telegram Widget Box */
+    .telegram-card {
       background-color: var(--card-bg);
       border-radius: 12px;
       padding: 15px;
       border: 1px solid var(--border-color);
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 450px;
-    }
-
-    .telegram-post-wrapper {
-      width: 100%;
-      display: flex;
       justify-content: center;
+      min-height: 500px;
+      overflow: hidden;
     }
 
-    /* Button to Open Channel */
+    .telegram-card iframe {
+      width: 100% !important;
+      border: none !important;
+    }
+
     .btn-telegram {
       display: block;
       width: 100%;
@@ -89,43 +87,40 @@
       font-weight: bold;
       margin-top: 15px;
       font-size: 14px;
-      transition: opacity 0.2s;
-    }
-
-    .btn-telegram:hover {
-      opacity: 0.9;
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <!-- Header -->
     <header>
       <div class="logo">APT M Plus</div>
       <div class="badge">AKB Media</div>
     </header>
 
-    <!-- Telegram Feed Section -->
-    <div class="feed-container">
-      <div class="telegram-post-wrapper">
-        <!-- بەکارهێنانی Widgetی تیلیگرام بۆ پۆستەکانی akb_media -->
-        <script async src="https://telegram.org/js/telegram-widget.js?22" 
-                data-telegram-discussion="akb_media" 
-                data-comments-limit="5"
-                data-width="100%" 
-                data-userpic="true" 
-                data-color="24A1DE" 
-                data-dark="1">
-        </script>
-      </div>
+    <div class="telegram-card">
+      <!-- بەکارهێنانی Frameی فەرمیی کەناڵی تیلیگرام بەبێ هەڵەی Discussion -->
+      <iframe src="https://tgwidget.com/widget/?id=65d75a133d1c2" width="100%" height="550" frameborder="0" scrolling="no" style="overflow:hidden;"></iframe>
     </div>
 
-    <!-- Direct Channel Link Button -->
-    <a href="https://t.me/akb_media" target="_blank" class="btn-telegram">
-      سەردانی کەناڵی فەرمی AKB Media بکە لە تیلیگرام
+    <!-- ئەگەر بڕیارە تەواوی کەناڵەکە بە ئاسانی بپشکنیت -->
+    <a href="https://t.me/s/akb_media" target="_blank" class="btn-telegram">
+      کردنەوەی گشت پۆستەکانی AKB Media
     </a>
   </div>
 
+  <script>
+    // جێگیرکردنی scriptی فەرمی بۆ خویندنەوەی ویدمەتی پۆستی تاکی
+    const script = document.createElement('script');
+    script.src = "https://telegram.org/js/telegram-widget.js?22";
+    script.setAttribute('data-telegram-post', 'akb_media/2'); // یەکەم پۆست
+    script.setAttribute('data-width', '100%');
+    script.setAttribute('data-dark', '1');
+    script.async = true;
+    
+    const card = document.querySelector('.telegram-card');
+    card.innerHTML = ''; // پاککردنەوە
+    card.appendChild(script);
+  </script>
 </body>
 </html>
