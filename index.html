@@ -48,12 +48,9 @@
       font-size: 20px;
       font-weight: bold;
       color: var(--accent-color);
-      display: flex;
-      align-items: center;
-      gap: 8px;
     }
 
-    /* Live Video Section */
+    /* Section Header */
     .section-title {
       font-size: 16px;
       font-weight: bold;
@@ -61,7 +58,6 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      color: var(--text-color);
     }
 
     .live-badge {
@@ -79,6 +75,7 @@
       100% { opacity: 1; }
     }
 
+    /* Video Player Container */
     .live-stream-container {
       position: relative;
       padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
@@ -99,11 +96,11 @@
       border: 0;
     }
 
-    /* Search Bar Section */
+    /* Search Section */
     .search-box {
       display: flex;
       gap: 10px;
-      margin-bottom: 25px;
+      margin-bottom: 10px;
     }
 
     .search-input {
@@ -139,10 +136,10 @@
     .quick-tags {
       display: flex;
       gap: 8px;
-      margin-top: 8px;
+      margin-bottom: 25px;
     }
 
-    /* News Feed Section */
+    /* News Grid */
     .news-grid {
       display: grid;
       gap: 15px;
@@ -196,9 +193,7 @@
   <div class="container">
     <!-- Header -->
     <header>
-      <div class="logo">
-        <span>APT M Plus</span>
-      </div>
+      <div class="logo">APT M Plus</div>
     </header>
 
     <!-- 1. لایڤی ڕاستەوخۆ -->
@@ -207,25 +202,26 @@
       <span class="live-badge">LIVE</span>
     </div>
     <div class="live-stream-container">
+      <!-- بەکارهێنانی Playerی ڕاستەوخۆی بەستەری فەرمی -->
       <iframe 
-        src="https://www.youtube.com/embed/live_stream?channel=UCvM_L84C7G9C9y_vGv8N7vA" 
-        title="Kurdistan24 Live" 
+        src="https://www.youtube.com/embed/videoseries?list=PL46A_7095493F2B33" 
+        title="Kurdistan24 Live Stream" 
         allowfullscreen>
       </iframe>
     </div>
 
-    <!-- 2. گەڕان بەدوای هەواڵ (تایبەت بە مووچە) -->
+    <!-- 2. گەڕان بەدوای هەواڵ -->
     <div class="section-title">گەڕان بەدوای هەواڵەکان</div>
     <div class="search-box">
       <input type="text" id="searchInput" class="search-input" placeholder="گەڕان بەدوای هەواڵ (بۆ نموونە: مووچە)..." oninput="filterNews()">
     </div>
-    <div class="quick-tags" style="margin-top: -15px; margin-bottom: 20px;">
+    <div class="quick-tags">
       <button class="btn-quick-search" onclick="setSearch('مووچە')"># مووچە</button>
       <button class="btn-quick-search" onclick="setSearch('کوردستان')"># کوردستان</button>
       <button class="btn-quick-search" onclick="setSearch('')">هەموی</button>
     </div>
 
-    <!-- 3. هەواڵی خێرا / هەموو هەواڵەکان -->
+    <!-- 3. دوایین هەواڵەکان -->
     <div class="section-title">دوایین هەواڵە خێراکان</div>
     <div id="loading" class="loading">داگرتنی هەواڵەکان...</div>
     <div id="error" class="error" style="display: none; color: var(--accent-color);"></div>
@@ -236,50 +232,73 @@
     let allNews = [];
 
     const RSS_URL = 'https://www.kurdistan24.net/ku/rss';
-    const API_URL = `https://api.allorigins.win/get?url=${encodeURIComponent(RSS_URL)}`;
+    // بەکارهێنانی api.rss2json لە ڕێگەی proxy بۆ تێپەڕاندنی بلۆکی Vercel
+    const PRIMARY_API = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(RSS_URL)}`;
+    const BACKUP_API = `https://corsproxy.io/?${encodeURIComponent(RSS_URL)}`;
 
-    // داگرتنی هەواڵەکان لە RSS
-    fetch(API_URL)
-      .then(res => {
-        if (!res.ok) throw new Error('کێشە لە پەیوەندی هەیە');
-        return res.json();
-      })
-      .then(data => {
-        document.getElementById('loading').style.display = 'none';
+    // داگرتنی هەواڵەکان
+    async function fetchNews() {
+      try {
+        const res = await fetch(PRIMARY_API);
+        const data = await res.json();
         
+        if (data.status === 'ok' && data.items.length > 0) {
+          allNews = data.items.map(item => ({
+            title: item.title,
+            link: item.link,
+            pubDate: item.pubDate ? new Date(item.pubDate).toLocaleDateString('ckb-IQ', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '',
+            image: item.thumbnail || ''
+          }));
+          document.getElementById('loading').style.display = 'none';
+          renderNews(allNews);
+        } else {
+          throw new Error('فایلی RSS وەڵامی نەدایەوە');
+        }
+      } catch (err) {
+        // ئەگەر APIی یەکەم کاری نکرد، بەکارهێنانی Backup API
+        fetchBackupNews();
+      }
+    }
+
+    async function fetchBackupNews() {
+      try {
+        const res = await fetch(BACKUP_API);
+        const text = await res.text();
         const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(data.contents, "text/xml");
+        const xmlDoc = parser.parseFromString(text, "text/xml");
         const items = xmlDoc.querySelectorAll("item");
 
-        items.forEach(item => {
-          const title = item.querySelector("title")?.textContent || '';
-          const link = item.querySelector("link")?.textContent || '#';
-          const pubDateRaw = item.querySelector("pubDate")?.textContent || '';
-          
-          let mediaUrl = '';
-          const media = item.getElementsByTagName("media:content")[0] || item.getElementsByTagName("enclosure")[0];
-          if (media) {
-            mediaUrl = media.getAttribute("url");
-          }
+        if (items.length > 0) {
+          allNews = [];
+          items.forEach(item => {
+            const title = item.querySelector("title")?.textContent || '';
+            const link = item.querySelector("link")?.textContent || '#';
+            const pubDateRaw = item.querySelector("pubDate")?.textContent || '';
+            let mediaUrl = '';
+            const media = item.getElementsByTagName("media:content")[0] || item.getElementsByTagName("enclosure")[0];
+            if (media) mediaUrl = media.getAttribute("url");
 
-          allNews.push({
-            title,
-            link,
-            pubDate: pubDateRaw ? new Date(pubDateRaw).toLocaleDateString('ckb-IQ', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '',
-            image: mediaUrl
+            allNews.push({
+              title,
+              link,
+              pubDate: pubDateRaw ? new Date(pubDateRaw).toLocaleDateString('ckb-IQ', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '',
+              image: mediaUrl
+            });
           });
-        });
 
-        renderNews(allNews);
-      })
-      .catch(err => {
+          document.getElementById('loading').style.display = 'none';
+          renderNews(allNews);
+        } else {
+          throw new Error('هیچ هەواڵێک نەدۆزرایەوە');
+        }
+      } catch (error) {
         document.getElementById('loading').style.display = 'none';
         const errDiv = document.getElementById('error');
         errDiv.style.display = 'block';
-        errDiv.innerText = 'نەتوانرا هەواڵەکان باربکرێن. تکایە هێڵی ئینتەرنێتەکەت بپشکنە.';
-      });
+        errDiv.innerText = 'کێشەیەک لە بارکردنی هەواڵەکان ڕوویدا. تکایە دواتر تاقی بکەرەوە.';
+      }
+    }
 
-    // پێشاندانی هەواڵەکان لەسەر شاشە
     function renderNews(newsList) {
       const container = document.getElementById('newsContainer');
       container.innerHTML = '';
@@ -308,18 +327,19 @@
       });
     }
 
-    // گەڕان بەدوای هەواڵدا
     function filterNews() {
       const query = document.getElementById('searchInput').value.toLowerCase();
       const filtered = allNews.filter(item => item.title.toLowerCase().includes(query));
       renderNews(filtered);
     }
 
-    // دوگمەی خێرای گەڕان (بۆ مووچە)
     function setSearch(term) {
       document.getElementById('searchInput').value = term;
       filterNews();
     }
+
+    // دەستپێکردنی داگرتن
+    fetchNews();
   </script>
 </body>
 </html>
