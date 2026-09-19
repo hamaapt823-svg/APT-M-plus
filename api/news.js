@@ -1,3 +1,4 @@
+// پاشەکەوتکردنی کاتی و فایلی داتا بۆ سێرڤەری ڤێرسێل
 let liveNewsDatabase = [
   {
     id: 1,
@@ -18,25 +19,25 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  // ئەگەر داواکاری لە تەلەگرامەوە یان لە ڕێگەی POSTـەوە هات
+  // ئەگەر پەیامێک لە تەلەگرامەوە یان لە ڕێگەی POSTـەوە هات
   if (req.method === 'POST') {
     try {
       let title, content, category;
 
-      // پشکنین بۆ ئەوەی ئایا داتاکە لە تەلەگرامەوە هاتووە یان ڕاستەوخۆ
-      if (req.body.message) {
+      if (req.body && req.body.message) {
         const text = req.body.message.text || '';
-        title = text.split('\n')[0] || 'هەواڵی نوێ';
+        const lines = text.split('\n');
+        title = lines[0] || 'هەواڵی نوێ';
         content = text;
-        category = 'گشتی';
-      } else {
+        category = 'ناوخۆیی';
+      } else if (req.body) {
         title = req.body.title;
         content = req.body.content;
         category = req.body.category || 'گشتی';
       }
 
       if (!content) {
-        return res.status(400).json({ success: false, error: 'ناوەڕۆک پێویستە' });
+        return res.status(400).json({ success: false, error: 'ناوەڕۆکی پەیام بەتاڵە' });
       }
 
       const newNewsItem = {
@@ -60,6 +61,17 @@ export default async function handler(req, res) {
     }
   }
 
+  // ناردنی هەواڵەکان بۆ فڕۆنتەند
   liveNewsDatabase.sort((a, b) => b.timestamp - a.timestamp);
-  return res.status(200).json({ success: true, data: liveNewsDatabase });
+  return res.status(200).json({ 
+    success: true, 
+    articles: liveNewsDatabase.map(item => ({
+      title: item.title,
+      url: '#',
+      summary: item.content,
+      published: new Date(item.timestamp).toISOString(),
+      source: 'APT Media'
+    })),
+    data: liveNewsDatabase 
+  });
 }
