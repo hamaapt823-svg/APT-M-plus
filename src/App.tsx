@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   ArrowUpRight,
@@ -10,12 +10,6 @@ import {
   Search,
   Sparkles,
 } from 'lucide-react';
-import {
-  getGetRudawBriefingQueryKey,
-  getGetRudawHeadlinesQueryKey,
-  useGetRudawBriefing,
-  useGetRudawHeadlines,
-} from '@workspace/api-client-react';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -29,7 +23,6 @@ import {
 
 const queryClient = new QueryClient();
 
-// APT M+ Brand Sun Logo Icon Component
 function AptSunLogo({ className = "w-8 h-8" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -56,45 +49,49 @@ function AptSunLogo({ className = "w-8 h-8" }: { className?: string }) {
 function Home() {
   const topics = [
     { key: 'all', label: 'هەموو هەواڵەکان' },
-    { key: 'kurdistan', label: 'کوردستان' },
-    { key: 'iraq', label: 'عێراق' },
-    { key: 'region', label: 'ناوچە' },
-    { key: 'world', label: 'جیهان' },
-    { key: 'culture', label: 'کولتوور' },
+    { key: 'ناوخۆیی', label: 'ناوخۆیی' },
+    { key: 'گشتی', label: 'گشتی' },
   ];
   
   const [selectedTopic, setSelectedTopic] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [articles, setArticles] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const selectedTopicLabel =
-    topics.find((item) => item.key === selectedTopic)?.label ?? topics[0].label;
-  const topic = selectedTopic === 'all' ? undefined : selectedTopic;
-  const headlinesParams = useMemo(() => ({ topic, limit: 12 }), [topic]);
-  const briefingParams = useMemo(() => ({ topic, limit: 6 }), [topic]);
+  // هێنانی هەواڵەکان لە ئەی پی ئای خۆمان (تەلەگرام بۆت)
+  const fetchNews = async () => {
+    try {
+      setIsRefreshing(true);
+      const res = await fetch('/api/news');
+      const json = await res.json();
+      if (json.success && json.articles) {
+        setArticles(json.articles);
+      }
+    } catch (err) {
+      console.error('هەڵە لە هێنانی هەواڵەکان:', err);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
 
-  const headlinesQuery = useGetRudawHeadlines(headlinesParams, {
-    query: { queryKey: getGetRudawHeadlinesQueryKey(headlinesParams) },
-  });
-  const briefingQuery = useGetRudawBriefing(briefingParams, {
-    query: { queryKey: getGetRudawBriefingQueryKey(briefingParams) },
-  });
+  useEffect(() => {
+    fetchNews();
+    // نوێکردنەوەی خۆکار هەموو ١٠ چرکەیەک جارێک
+    const interval = setInterval(fetchNews, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const isRefreshing = headlinesQuery.isFetching || briefingQuery.isFetching;
-  const rawArticles = headlinesQuery.data?.articles ?? briefingQuery.data?.articles ?? [];
-
-  // Filter articles based on search query
-  const articles = useMemo(() => {
-    if (!searchQuery.trim()) return rawArticles;
-    return rawArticles.filter(
+  // فلتەرکردنی هەواڵەکان بەپێی گەڕان
+  const filteredArticles = useMemo(() => {
+    if (!searchQuery.trim()) return articles;
+    return articles.filter(
       (a) =>
         a.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         a.summary?.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [rawArticles, searchQuery]);
-
-  const refresh = () => {
-    void Promise.all([headlinesQuery.refetch(), briefingQuery.refetch()]);
-  };
+  }, [articles, searchQuery]);
 
   return (
     <div className="grain min-h-[100dvh] bg-background font-sans text-foreground" dir="rtl" lang="ku">
@@ -110,13 +107,13 @@ function Home() {
                 <span className="font-sans text-2xl font-black tracking-tight text-foreground">APT M</span>
                 <span className="text-2xl font-black text-[#ED2024]">+</span>
               </div>
-              <p className="font-mono text-[10px] tracking-[0.14em] text-muted-foreground">APT Media Plus / پلاتفۆرمی زانیاری</p>
+              <p className="font-mono text-[10px] tracking-[0.14em] text-muted-foreground">APT Media / پلاتفۆرمی زانیاری</p>
             </div>
           </div>
 
           <div className="hidden items-center gap-3 sm:flex">
             <span className="h-2.5 w-2.5 rounded-full bg-[#278E43] animate-pulse" />
-            <span className="font-mono text-[11px] tracking-[0.12em] text-muted-foreground">کوردستان و جیهان</span>
+            <span className="font-mono text-[11px] tracking-[0.12em] text-muted-foreground">تەلەگرام لایڤ بۆت</span>
           </div>
         </div>
       </header>
@@ -127,18 +124,18 @@ function Home() {
           <div className="relative max-w-3xl">
             <p className="mb-3 flex items-center gap-2 font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-[#ED2024]">
               <span className="h-2 w-2 rounded-full bg-[#278E43]" />
-              پلاتفۆرمی زیرەکی هەواڵ
+              سیستمی خۆکاری تەلەگرام
             </p>
             <h1 className="text-3xl font-black tracking-tight sm:text-5xl lg:text-6xl text-foreground">
-              زانیاری خێرا، <br />
-              <span className="text-[#278E43]">لە چوارچێوەی دروستدا.</span>
+              هەواڵی خێرا و لایڤ، <br />
+              <span className="text-[#278E43]">ڕاستەوخۆ لە تەلەگرامەوە.</span>
             </h1>
             <p className="mt-4 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
-              نوێترین هەواڵ و ڕووداوەکانی کوردستان و جیهان بە پوختەیی و بە پێشکەوتووترین ڕووکار.
+              هەر پەیامێک لە بۆتی `@APTmedia_bot` بنێریت، دەستبەجێ لەسەر ئەم سایتە بڵاو دەبێتەوە.
             </p>
           </div>
 
-          {/* Functional Search Bar */}
+          {/* Search Bar */}
           <div className="mt-8 max-w-xl">
             <div className="relative flex items-center">
               <Search className="absolute right-4 h-5 w-5 text-muted-foreground" />
@@ -161,13 +158,13 @@ function Home() {
           </div>
         </section>
 
-        {/* Topics Bar */}
-        <section className="animate-rise-in border-b border-border/80 py-4" aria-label="بابەتێک هەڵبژێرە">
+        {/* Refresh Bar */}
+        <section className="animate-rise-in border-b border-border/80 py-4" aria-label="کردارەکان">
           <div className="flex items-center justify-between gap-4">
-            <p className="font-mono text-[10px] tracking-[0.14em] text-muted-foreground">بەشەکان</p>
+            <p className="font-mono text-[10px] tracking-[0.14em] text-muted-foreground">نوێترین بڵاوکراوەکان</p>
             <button
               type="button"
-              onClick={refresh}
+              onClick={fetchNews}
               disabled={isRefreshing}
               className="group inline-flex items-center gap-2 rounded-full border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-60"
             >
@@ -175,94 +172,31 @@ function Home() {
               {isRefreshing ? 'نوێکردنەوە...' : 'نوێکردنەوە'}
             </button>
           </div>
-          <div className="mt-3 flex max-w-full gap-2 overflow-x-auto pb-1">
-            {topics.map((item) => {
-              const active = selectedTopic === item.key;
-              return (
-                <button
-                  type="button"
-                  key={item.key}
-                  onClick={() => setSelectedTopic(item.key)}
-                  className={`shrink-0 rounded-xl border px-4 py-2 text-xs font-medium transition-all ${
-                    active
-                      ? 'border-[#278E43] bg-[#278E43] text-white shadow-sm'
-                      : 'border-border bg-card/50 text-muted-foreground hover:border-[#278E43]/40 hover:text-foreground'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
         </section>
 
-        {/* Main Grid Feed */}
-        <div className="grid gap-10 pt-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(300px,.72fr)] lg:gap-14 lg:pt-10">
-          {/* AI Briefing Column */}
-          <section className="animate-rise-in min-w-0">
-            <SectionKicker icon={<Sparkles size={14} className="text-[#FEBD11]" />} label="پوختەی زیرەک APT M+" />
-            <div className="mt-4">
-              {briefingQuery.isLoading ? (
-                <BriefingSkeleton />
-              ) : briefingQuery.error ? (
-                <BriefingError onRetry={() => void briefingQuery.refetch()} />
-              ) : briefingQuery.data?.briefing ? (
-                <article className="relative overflow-hidden rounded-2xl border border-[#278E43]/30 bg-card p-6 shadow-sm sm:p-8">
-                  <div className="absolute top-0 right-0 h-full w-1.5 bg-[#ED2024]" />
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h2 className="text-xl font-bold tracking-tight sm:text-2xl">پوختەی دەنگوباسەکان</h2>
-                      <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                        نوێکراوەتەوە لە {formatGeneratedAt(briefingQuery.data.generatedAt)}
-                      </p>
-                    </div>
-                    <span className="rounded-full bg-[#FEBD11]/20 px-3 py-1 font-mono text-[10px] font-bold text-amber-600">
-                      APT AI
-                    </span>
-                  </div>
-                  <div className="mt-6 space-y-3 text-base leading-7 text-foreground/90">
-                    {briefingQuery.data.briefing.split(/\n+/).map((paragraph, index) => (
-                      <p key={index}>{formatBriefingLine(paragraph)}</p>
-                    ))}
-                  </div>
-                </article>
-              ) : (
-                <EmptyBriefing />
-              )}
+        {/* News Feed Section */}
+        <div className="pt-8 lg:pt-10">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <SectionKicker icon={<Clock3 size={14} className="text-[#ED2024]" />} label="لیستی هەواڵەکان" />
+              <h2 className="mt-2 text-2xl font-bold tracking-tight">هەواڵە لایفەکان</h2>
             </div>
-          </section>
+            <span className="font-mono text-[10px] tracking-[0.12em] text-muted-foreground">{filteredArticles.length} بابەت</span>
+          </div>
 
-          {/* Live News Feed Column */}
-          <section className="animate-rise-in min-w-0 lg:border-r lg:border-border/80 lg:pr-8">
-            <div className="flex items-end justify-between gap-4">
-              <div>
-                <SectionKicker icon={<Clock3 size={14} className="text-[#ED2024]" />} label="تازەترین هەواڵ" />
-                <h2 className="mt-2 text-2xl font-bold tracking-tight">ڕووداوەکان</h2>
+          <div className="mt-6">
+            {isLoading ? (
+              <HeadlineSkeleton />
+            ) : filteredArticles.length === 0 ? (
+              <EmptyStories topic="هیچ هەواڵێک نییە" />
+            ) : (
+              <div className="divide-y divide-border/80 rounded-2xl border border-border bg-card p-6">
+                {filteredArticles.map((article, index) => (
+                  <StoryRow key={`${article.url}-${index}`} article={article} index={index} />
+                ))}
               </div>
-              {articles.length > 0 && (
-                <span className="font-mono text-[10px] tracking-[0.12em] text-muted-foreground">{articles.length} بابەت</span>
-              )}
-            </div>
-            <div className="mt-5">
-              {headlinesQuery.isLoading ? (
-                <HeadlineSkeleton />
-              ) : articles.length === 0 ? (
-                <EmptyStories topic={searchQuery ? `گەڕان بۆ: ${searchQuery}` : selectedTopicLabel} />
-              ) : (
-                <div className="divide-y divide-border/80">
-                  {articles.map((article, index) => (
-                    <StoryRow key={`${article.url}-${index}`} article={article} index={index} />
-                  ))}
-                </div>
-              )}
-            </div>
-            {headlinesQuery.data?.generatedAt && (
-              <p className="mt-6 flex items-center gap-2 font-mono text-[10px] tracking-[0.1em] text-muted-foreground">
-                <CalendarDays size={12} />
-                دواین نوێکردنەوە: {formatGeneratedAt(headlinesQuery.data.generatedAt)}
-              </p>
             )}
-          </section>
+          </div>
         </div>
       </main>
 
@@ -270,7 +204,7 @@ function Home() {
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10">
           <div className="flex items-center gap-2">
             <AptSunLogo className="h-5 w-5" />
-            <span className="font-bold">APT M+</span>
+            <span className="font-bold">APT Media</span>
           </div>
           <p className="font-mono text-[10px] tracking-[0.12em] text-muted-foreground">
             تەواوی مافەکانی پارێزراوە بۆ APT Media Plus
@@ -306,42 +240,20 @@ function StoryRow({ article, index }: { article: Article; index: number }) {
           {String(index + 1).padStart(2, '0')}
         </span>
         <div className="min-w-0 flex-1">
-          <a
-            href={article.url}
-            target="_blank"
-            rel="noreferrer"
-            className="block text-base font-bold leading-snug tracking-tight text-foreground transition-colors group-hover:text-[#278E43]"
-          >
+          <h3 className="block text-base font-bold leading-snug tracking-tight text-foreground transition-colors group-hover:text-[#278E43]">
             {article.title}
-            <ArrowUpRight size={14} className="mr-1 inline-block opacity-40 transition-transform group-hover:-translate-y-0.5" />
-          </a>
+          </h3>
           {article.summary && (
-            <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{article.summary}</p>
+            <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground whitespace-pre-line">{article.summary}</p>
           )}
           <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
-            <span className="font-bold text-[#278E43]">{article.source || 'APT M+'}</span>
+            <span className="font-bold text-[#278E43]">{article.source || 'APT Media'}</span>
             <span>•</span>
-            <span>{formatPublished(article.published)}</span>
-            <a href={article.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-foreground/60 hover:text-[#278E43]">
-              سەرچاوە <ExternalLink size={10} />
-            </a>
+            <span>{article.published}</span>
           </div>
         </div>
       </div>
     </article>
-  );
-}
-
-function BriefingSkeleton() {
-  return (
-    <div className="rounded-2xl border border-border bg-card p-6">
-      <div className="h-4 w-20 bg-muted animate-pulse rounded" />
-      <div className="mt-4 h-7 w-3/4 bg-muted animate-pulse rounded" />
-      <div className="mt-6 space-y-3">
-        <div className="h-4 w-full bg-muted animate-pulse rounded" />
-        <div className="h-4 w-[90%] bg-muted animate-pulse rounded" />
-      </div>
-    </div>
   );
 }
 
@@ -355,53 +267,12 @@ function HeadlineSkeleton() {
   );
 }
 
-function BriefingError({ onRetry }: { onRetry: () => void }) {
-  return (
-    <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6">
-      <CircleAlert className="text-red-500" size={20} />
-      <h2 className="mt-2 text-lg font-bold">پوختەکە بار نەکرا</h2>
-      <button type="button" onClick={onRetry} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-card border px-3 py-1.5 text-xs font-medium">
-        <RefreshCw size={12} /> هەوڵدانەوە
-      </button>
-    </div>
-  );
-}
-
-function EmptyBriefing() {
-  return (
-    <div className="rounded-2xl border border-border bg-card p-6">
-      <p className="text-base font-bold">هیچ پوختەیەک نادۆزرایەوە.</p>
-    </div>
-  );
-}
-
 function EmptyStories({ topic }: { topic: string }) {
   return (
     <div className="rounded-xl border border-dashed border-border p-6 text-center">
-      <p className="text-sm font-medium">هیچ هەواڵێک نەدۆزرایەوە بۆ «{topic}»</p>
+      <p className="text-sm font-medium">{topic}</p>
     </div>
   );
-}
-
-function formatGeneratedAt(value: string) {
-  if (!value) return 'ئێستا';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('ku-Arab-IQ', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(date);
-}
-
-function formatPublished(value: string) {
-  if (!value) return 'ئێستا';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('ku-Arab-IQ', { month: 'short', day: 'numeric', year: 'numeric' }).format(date);
-}
-
-function formatBriefingLine(value: string) {
-  return value
-    .replace(/^#{1,6}\s*/, '')
-    .replace(/^\*\s*/, '• ')
-    .replace(/^-\s*/, '• ');
 }
 
 function Router() {
