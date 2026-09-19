@@ -5,8 +5,7 @@ const newsHandler = require('./api/news');
 const app = express();
 app.use(cors());
 
-// هەمان API
 app.get('/api/news', newsHandler);
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`سێرڤەر لەسەر پۆرت کار دەکات: ${PORT}`));
+app.listen(PORT, () => console.log(`سێرڤەر کار دەکات لەسەر پۆرت: ${PORT}`));
