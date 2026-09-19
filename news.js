@@ -1,81 +1,61 @@
 export default async function handler(req, res) {
-  // ئامادەکردنی header بۆ ڕێگریکردن لە بلۆکبوون (CORS)
-  res.setHeader('Access-Control-Allow-Credentials', true);
+  // ڕێگەدان بە CORS بۆ ئەوەی وێبگەڕ بڵۆکی نەکات
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  res.setHeader('Content-Type', 'application/json');
 
   const { cat = 'all' } = req.query;
 
-  // سەرچاوەکانی RSS
-  const rssFeeds = {
+  const feeds = {
     all: 'https://www.rudaw.net/sorani/rss',
     local: 'https://www.rudaw.net/sorani/kurdistan/rss',
     sports: 'https://www.rudaw.net/sorani/sports/rss',
     economy: 'https://www.rudaw.net/sorani/business/rss'
   };
 
-  const targetFeed = rssFeeds[cat] || rssFeeds.all;
+  const targetUrl = feeds[cat] || feeds.all;
 
   try {
-    // هەوڵدان بۆ هێنانی هەواڵەکان لە RSS بەکارهێنانی سێرڤەری گشتی
-    const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(targetFeed)}`);
+    const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(targetUrl)}`);
     const data = await response.json();
 
     if (data.status === 'ok' && data.items && data.items.length > 0) {
-      const formattedItems = data.items.map((item) => {
-        let imgUrl = item.thumbnail || (item.enclosure ? item.enclosure.link : null);
-        if (!imgUrl) {
-          imgUrl = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800';
-        }
-
-        return {
-          title: item.title,
-          link: item.link,
-          img: imgUrl,
-          date: new Date(item.pubDate).toLocaleTimeString('ckb', { hour: '2-digit', minute: '2-digit' }),
-          source: 'APT Live RSS'
-        };
-      });
-
-      return res.status(200).json(formattedItems);
+      const news = data.items.map((item) => ({
+        title: item.title,
+        link: item.link,
+        img: item.thumbnail || (item.enclosure ? item.enclosure.link : 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800'),
+        date: new Date(item.pubDate).toLocaleTimeString('ckb', { hour: '2-digit', minute: '2-digit' }),
+        source: 'APT Live'
+      }));
+      return res.status(200).json(news);
     } else {
-      throw new Error("RSS data failed");
+      throw new Error('فەیڵ بوو لە هێنانی RSS');
     }
   } catch (error) {
-    // 💡 ئەگەر RSS سێرڤەرەکەی ڕاوەستابوو، ئەم هەواڵە زێندووانە ئۆتۆماتیکی دەنێرێت بۆ ئەوەی شوێنەکە بە بەتاڵی نەمێنێتەوە
+    // هەواڵی بەکئەپ ئەگەر ئینتەرنێت پچڕا یان RSS خاو بوو
     const fallbackNews = [
       {
-        title: 'کەشناسی هەرێم: نزمبوونەوەی پلەکانی گەرما و شەپۆلێکی بارانبارین بەڕێوەیە.',
-        link: '#',
+        title: 'کەشناسی هەرێم: شەپۆلێکی بارانبارین و بەفر زۆربەی ناوچەکان دەگرێتەوە.',
+        link: 'https://www.rudaw.net',
         img: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=800',
         date: 'ئێستا',
-        source: 'APT Smart Engine'
+        source: 'APT News'
       },
       {
-        title: 'بازاڕی دراو و زێڕ: گۆڕانکاریی نوێ لە نرخەکانی ئەمڕۆدا ڕووی دا.',
-        link: '#',
+        title: 'بەرزبوونەوەی نرخەکانی زێڕ و نەوت لە بازاڕە جیهانییەکاندا.',
+        link: 'https://www.rudaw.net',
         img: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800',
-        date: 'پێش خولەکێک',
+        date: 'پێش ٥ خولەک',
         source: 'APT Economy'
       },
       {
-        title: 'یارییەکانی ئەم هەفتەیەی خولی پاڵەوانەکان دەستی پێکردەوە.',
-        link: '#',
+        title: 'یارییەکانی قۆناغی داهاتووی خولی پاڵەوانەکان بەڕێوەدەچێت.',
+        link: 'https://www.rudaw.net',
         img: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800',
-        date: 'پێش ٥ خولەک',
+        date: 'پێش ١٠ خولەک',
         source: 'APT Sport'
       }
     ];
-
     return res.status(200).json(fallbackNews);
   }
 }
