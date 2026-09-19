@@ -4,193 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>APT Media</title>
-    <!-- ئایکۆنەکانی Bootstrap (خێراتر و باوەڕپێکراوترن) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: system-ui, -apple-system, sans-serif;
-            user-select: none;
-        }
-
-        body {
-            background-color: #000;
-            color: #fff;
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-        }
-
-        /* بەشی سەرەوە */
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.3), transparent);
-            padding: 15px 0 10px;
-            text-align: center;
-        }
-
-        .logo {
-            color: #ff3b30;
-            font-size: 24px;
-            font-weight: 800;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-        }
-
-        .nav-tabs {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            list-style: none;
-            overflow-x: auto;
-            padding: 0 10px;
-        }
-
-        .nav-tabs li {
-            font-size: 15px;
-            color: #aaa;
-            cursor: pointer;
-            padding-bottom: 5px;
-            transition: all 0.3s;
-            white-space: nowrap;
-        }
-
-        .nav-tabs li.active {
-            color: #fff;
-            font-weight: bold;
-            border-bottom: 3px solid #ff3b30;
-        }
-
-        /* کانتێنەری سەرەکی سکرۆڵکردن */
-        .app-container {
-            height: 100vh;
-            width: 100vw;
-            overflow-y: scroll;
-            scroll-snap-type: y mandatory;
-            scroll-behavior: smooth;
-        }
-
-        /* کارتی هەواڵ */
-        .news-card {
-            height: 100vh;
-            width: 100vw;
-            scroll-snap-align: start;
-            position: relative;
-            background-color: #050505;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .news-bg {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: brightness(0.75);
-        }
-
-        .overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.95) 10%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.6) 100%);
-        }
-
-        /* زانیارییەکانی هەواڵ */
-        .news-details {
-            position: absolute;
-            bottom: 40px;
-            right: 80px;
-            left: 20px;
-            z-index: 10;
-        }
-
-        .badge-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-        }
-
-        .badge {
-            background-color: #ff3b30;
-            color: #fff;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .news-time {
-            font-size: 12px;
-            color: #ccc;
-        }
-
-        .publisher {
-            font-size: 15px;
-            font-weight: 700;
-            margin-bottom: 6px;
-            color: #ff3b30;
-        }
-
-        .news-title {
-            font-size: 18px;
-            line-height: 1.5;
-            color: #fff;
-            font-weight: 600;
-        }
-
-        /* دوگمەکانی لای ڕاست */
-        .action-bar {
-            position: absolute;
-            bottom: 50px;
-            right: 15px;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            gap: 22px;
-            align-items: center;
-        }
-
-        .action-btn {
-            background: none;
-            border: none;
-            color: #fff;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            font-size: 26px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-        }
-
-        .action-btn span {
-            font-size: 12px;
-            color: #ddd;
-        }
-
-        .action-btn.liked i {
-            color: #ff3b30;
-        }
-
-        /* بارکردن (Loading) */
-        .loader {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #ff3b30;
-            font-size: 20px;
-            font-weight: bold;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; user-select: none; }
+        body { background-color: #000; color: #fff; overflow: hidden; height: 100vh; width: 100vw; }
+        header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); padding: 15px 0 10px; text-align: center; }
+        .logo { color: #ff3b30; font-size: 24px; font-weight: 800; margin-bottom: 10px; }
+        .nav-tabs { display: flex; justify-content: center; gap: 15px; list-style: none; overflow-x: auto; }
+        .nav-tabs li { font-size: 15px; color: #aaa; cursor: pointer; padding-bottom: 5px; }
+        .nav-tabs li.active { color: #fff; font-weight: bold; border-bottom: 3px solid #ff3b30; }
+        .app-container { height: 100vh; width: 100vw; overflow-y: scroll; scroll-snap-type: y mandatory; }
+        .news-card { height: 100vh; width: 100vw; scroll-snap-align: start; position: relative; background-color: #111; display: flex; align-items: center; justify-content: center; }
+        .news-bg { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.7); }
+        .overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 10%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.6) 100%); }
+        .news-details { position: absolute; bottom: 40px; right: 80px; left: 20px; z-index: 10; }
+        .badge { background-color: #ff3b30; color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .news-time { font-size: 12px; color: #ccc; margin-right: 8px; }
+        .publisher { font-size: 15px; font-weight: 700; margin-bottom: 6px; color: #ff3b30; }
+        .news-title { font-size: 18px; line-height: 1.5; color: #fff; font-weight: 600; }
+        .action-bar { position: absolute; bottom: 50px; right: 15px; z-index: 10; display: flex; flex-direction: column; gap: 22px; align-items: center; }
+        .action-btn { background: none; border: none; color: #fff; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 26px; }
+        .action-btn span { font-size: 12px; color: #ddd; }
+        .loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #ff3b30; font-size: 18px; text-align: center; }
     </style>
 </head>
 <body>
@@ -206,95 +41,100 @@
     </header>
 
     <div class="app-container" id="newsFeed">
-        <div class="loader" id="loader">لە بارکردنی هەواڵە زیندوەکاندا...</div>
+        <div class="loader" id="loader"><i class="bi bi-arrow-repeat spin"></i> لە بارکردنی هەواڵە نوێیەکاندا...</div>
     </div>
 
     <script>
-        // بەکارهێنانی RSS Feed بۆ هێنانی چڕوپر و بەردەوامی هەواڵەکان ڕاستەوخۆ
-        const newsFeeds = [
-            { category: 'گشتی', url: 'https://api.rss2json.com/v1/api.json?rss_url=https://www.rudaw.net/kurmanci/rss' },
-            { category: 'ناوخۆیی', url: 'https://api.rss2json.com/v1/api.json?rss_url=https://www.rudaw.net/sorani/kurdistan/rss' },
-            { category: 'وەرزشی', url: 'https://api.rss2json.com/v1/api.json?rss_url=https://www.rudaw.net/sorani/sports/rss' },
-            { category: 'ئابووری', url: 'https://api.rss2json.com/v1/api.json?rss_url=https://www.rudaw.net/sorani/business/rss' }
+        // بەکارهێنانی CorsProxy بۆ ڕێگریکردن لە بلۆکبوون لەسەر Vercel
+        const proxy = "https://api.allorigins.win/raw?url=";
+        
+        const newsSources = [
+            { category: 'گشتی', url: 'https://www.rudaw.net/sorani/rss' },
+            { category: 'ناوخۆیی', url: 'https://www.rudaw.net/sorani/kurdistan/rss' },
+            { category: 'وەرزشی', url: 'https://www.rudaw.net/sorani/sports/rss' },
+            { category: 'ئابووری', url: 'https://www.rudaw.net/sorani/business/rss' }
         ];
 
         let allNewsData = [];
 
-        // هێنانی هەواڵەکان لە سێرڤەرەوە (چرکە بە چرکە نوێ دەبێتەوە)
         async function fetchLiveNews() {
             try {
-                let fetchedArticles = [];
-                for (let feed of newsFeeds) {
-                    const res = await fetch(feed.url);
-                    const data = await res.json();
-                    if (data.items) {
-                        data.items.forEach(item => {
-                            // دۆزینەوەی وێنە لە ناو هەواڵەکەدا
-                            let imgUrl = item.thumbnail || (item.enclosure ? item.enclosure.link : null);
-                            if(!imgUrl) {
-                                imgUrl = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=1000'; // وێنەی جێگرەوە
-                            }
+                let articles = [];
+                for (let source of newsSources) {
+                    const res = await fetch(proxy + encodeURIComponent(source.url));
+                    const textData = await res.text();
+                    
+                    // پارسکردنی XML/RSS
+                    const parser = new DOMParser();
+                    const xml = parser.parseFromString(textData, "text/xml");
+                    const items = xml.querySelectorAll("item");
 
-                            fetchedArticles.push({
-                                title: item.title,
-                                category: feed.category,
-                                time: new Date(item.pubDate).toLocaleTimeString('ckb', {hour: '2-digit', minute:'2-digit'}),
-                                publisher: 'APT Live News',
+                    items.forEach(item => {
+                        const title = item.querySelector("title") ? item.querySelector("title").textContent : '';
+                        const link = item.querySelector("link") ? item.querySelector("link").textContent : '';
+                        const pubDate = item.querySelector("pubDate") ? item.querySelector("pubDate").textContent : '';
+                        
+                        // دەرهێنانی وێنە لە ناو کانتێنتەکە
+                        let imgUrl = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=1000';
+                        const media = item.querySelector("enclosure") || item.querySelector("content");
+                        if(media && media.getAttribute("url")) {
+                            imgUrl = media.getAttribute("url");
+                        }
+
+                        if(title) {
+                            articles.push({
+                                title: title,
+                                category: source.category,
+                                time: pubDate ? new Date(pubDate).toLocaleTimeString('ckb', {hour: '2-digit', minute:'2-digit'}) : 'تازە',
+                                publisher: 'APT Live',
                                 image: imgUrl,
-                                link: item.link,
-                                likes: Math.floor(Math.random() * 500) + 50
+                                link: link,
+                                likes: Math.floor(Math.random() * 300) + 20
                             });
-                        });
-                    }
+                        }
+                    });
                 }
-                
-                allNewsData = fetchedArticles;
+
+                allNewsData = articles;
                 document.getElementById('loader').style.display = 'none';
                 renderNews(allNewsData);
 
-            } catch (error) {
-                document.getElementById('loader').innerText = 'کێشەیەک ڕوویدا لە هێنانی هەواڵەکان!';
+            } catch (err) {
+                document.getElementById('loader').innerHTML = 'کێشەیەک لە ڕابەستندا هەیە.<br>تکایە لاپەڕەکە ڕیفرێش بکەرەوە.';
             }
         }
 
-        // ڕەندەرکردنی هەواڵەکان لەسەر شاشە
-        function renderNews(newsList) {
+        function renderNews(list) {
             const container = document.getElementById('newsFeed');
             container.innerHTML = '';
-
-            if(newsList.length === 0) {
+            
+            if(list.length === 0) {
                 container.innerHTML = '<div class="loader">هیچ هەواڵێک بەردەست نییە</div>';
                 return;
             }
 
-            newsList.forEach((news) => {
+            list.forEach(news => {
                 const card = document.createElement('div');
                 card.className = 'news-card';
                 card.innerHTML = `
-                    <img class="news-bg" src="${news.image}" alt="News Image" onerror="this.src='https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=1000'">
+                    <img class="news-bg" src="${news.image}" onerror="this.src='https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=1000'">
                     <div class="overlay"></div>
-                    
                     <div class="news-details">
-                        <div class="badge-container">
+                        <div>
                             <span class="badge">${news.category}</span>
                             <span class="news-time">${news.time}</span>
                         </div>
                         <div class="publisher">${news.publisher}</div>
                         <div class="news-title">${news.title}</div>
                     </div>
-
                     <div class="action-bar">
-                        <button class="action-btn" onclick="toggleLike(this)">
-                            <i class="bi bi-heart-fill"></i>
-                            <span class="like-count">${news.likes}</span>
+                        <button class="action-btn" onclick="this.querySelector('i').classList.toggle('bi-heart-fill'); this.querySelector('i').style.color='#ff3b30';">
+                            <i class="bi bi-heart"></i>
+                            <span>${news.likes}</span>
                         </button>
                         <button class="action-btn" onclick="window.open('${news.link}', '_blank')">
-                            <i class="bi bi-chat-dots-fill"></i>
-                            <span>خوێندنەوە</span>
-                        </button>
-                        <button class="action-btn" onclick="shareNews('${news.title}', '${news.link}')">
-                            <i class="bi bi-share-fill"></i>
-                            <span>شێر</span>
+                            <i class="bi bi-box-arrow-up-right"></i>
+                            <span>سەرچاوە</span>
                         </button>
                     </div>
                 `;
@@ -302,47 +142,16 @@
             });
         }
 
-        // فلتەرکردنی بەشەکان
-        function filterNews(category, tabElement) {
-            document.querySelectorAll('.nav-tabs li').forEach(tab => tab.classList.remove('active'));
-            tabElement.classList.add('active');
-
-            if (category === 'گشتی') {
-                renderNews(allNewsData);
-            } else {
-                const filtered = allNewsData.filter(item => item.category === category);
-                renderNews(filtered);
-            }
+        function filterNews(cat, el) {
+            document.querySelectorAll('.nav-tabs li').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            if(cat === 'گشتی') renderNews(allNewsData);
+            else renderNews(allNewsData.filter(i => i.category === cat));
         }
 
-        // لایک کردن
-        function toggleLike(btn) {
-            btn.classList.toggle('liked');
-            let countSpan = btn.querySelector('.like-count');
-            let currentCount = parseInt(countSpan.innerText);
-            
-            if (btn.classList.contains('liked')) {
-                countSpan.innerText = currentCount + 1;
-            } else {
-                countSpan.innerText = currentCount - 1;
-            }
-        }
-
-        // شێرکردن
-        function shareNews(title, url) {
-            if (navigator.share) {
-                navigator.share({ title: title, url: url });
-            } else {
-                navigator.clipboard.writeText(url);
-                alert('لینکی هەواڵەکە کۆپی کرا!');
-            }
-        }
-
-        // دەستپێکردن و هێنانی داتا بە زوویی
         fetchLiveNews();
-
-        // نوێکردنەوەی هەواڵەکان ئۆتۆماتیکی (هەر ٣٠ چڕکە جارێک)
-        setInterval(fetchLiveNews, 30000);
+        // نوێکردنەوەی ئۆتۆماتیکی چرکە بە چرکە یان خولەک بە خولەک
+        setInterval(fetchLiveNews, 15000); 
     </script>
 </body>
 </html>
