@@ -31,7 +31,6 @@
             font-size: 24px;
             letter-spacing: 1px;
         }
-        /* مینیوی بەشەکان */
         .categories {
             display: flex;
             justify-content: center;
@@ -67,6 +66,11 @@
             border-radius: 12px;
             border: 1px solid #333;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .news-tag {
             background-color: #333;
@@ -93,10 +97,12 @@
             color: #888;
             font-size: 12px;
         }
-        .loading {
+        .loader {
             text-align: center;
             color: #888;
-            margin-top: 20px;
+            padding: 15px;
+            font-size: 14px;
+            display: none;
         }
     </style>
 </head>
@@ -105,67 +111,86 @@
     <header>
         <h1>APT Media</h1>
         <div class="categories">
-            <button class="category-btn active" onclick="filterNews('هەموو', this)">گشتی</button>
-            <button class="category-btn" onclick="filterNews('ناوخۆیی', this)">ناوخۆیی</button>
-            <button class="category-btn" onclick="filterNews('وەرزشی', this)">وەرزشی</button>
-            <button class="category-btn" onclick="filterNews('تەکنەلۆژیا', this)">تەکنەلۆژیا</button>
+            <button class="category-btn active" onclick="filterCategory('هەموو', this)">گشتی</button>
+            <button class="category-btn" onclick="filterCategory('ناوخۆیی', this)">ناوخۆیی</button>
+            <button class="category-btn" onclick="filterCategory('وەرزشی', this)">وەرزشی</button>
+            <button class="category-btn" onclick="filterCategory('تەکنەلۆژیا', this)">تەکنەلۆژیا</button>
         </div>
     </header>
 
-    <div id="news-container">
-        <div class="loading">چاوەڕێ بکە، زانیارییەکان باردەکرێن...</div>
-    </div>
+    <div id="news-container"></div>
+    <div id="loader" class="loader">لە بارکردنی هەواڵی زیاتر...</div>
 
     <script>
         let allNewsData = [];
+        let currentFiltered = [];
+        let displayedCount = 0;
+        const pageSize = 2; // ژمارەی هەواڵ لە هەر جارێکدا بۆ تاقیکردنەوەی سکرۆل
+        let isLoading = false;
+        let currentCategory = 'هەموو';
 
         async function fetchNews() {
-            const container = document.getElementById('news-container');
-            
             try {
                 const response = await fetch('/api/news');
                 const result = await response.json();
                 allNewsData = result.data || [];
-
-                displayNews(allNewsData);
+                
+                filterCategory('هەموو', document.querySelector('.category-btn'));
             } catch (error) {
-                container.innerHTML = '<div class="loading" style="color:#ff4d4d;">کێشە لە هێنانی زانیارییەکان هەیە.</div>';
+                document.getElementById('news-container').innerHTML = '<div class="loader" style="color:#ff4d4d;">کێشە لە هێنانی زانیارییەکان هەیە.</div>';
             }
         }
 
-        function displayNews(newsArray) {
-            const container = document.getElementById('news-container');
-            if (newsArray.length === 0) {
-                container.innerHTML = '<div class="loading">هیچ هەواڵێک لەم بەشەدا نییە.</div>';
-                return;
-            }
-
-            container.innerHTML = '';
-            newsArray.forEach(news => {
-                const newsDiv = document.createElement('div');
-                newsDiv.className = 'news-item';
-                newsDiv.innerHTML = `
-                    <span class="news-tag">${news.category || 'گشتی'}</span>
-                    <h3>${news.title}</h3>
-                    <p>${news.content}</p>
-                    <small>${news.date}</small>
-                `;
-                container.appendChild(newsDiv);
-            });
-        }
-
-        function filterNews(category, btn) {
-            // گۆڕینی ڕەنگی دوگمە چالاکەکان
+        function filterCategory(category, btn) {
             document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+            if(btn) btn.classList.add('active');
 
+            currentCategory = category;
             if (category === 'هەموو') {
-                displayNews(allNewsData);
+                currentFiltered = allNewsData;
             } else {
-                const filtered = allNewsData.filter(item => item.category === category);
-                displayNews(filtered);
+                currentFiltered = allNewsData.filter(item => item.category === category);
             }
+
+            document.getElementById('news-container').innerHTML = '';
+            displayedCount = 0;
+            loadMoreNews();
         }
+
+        function loadMoreNews() {
+            if (isLoading) return;
+            if (displayedCount >= currentFiltered.length) return;
+
+            isLoading = document.getElementById('loader').style.display = 'block';
+            
+            setTimeout(() => {
+                const container = document.getElementById('news-container');
+                const nextItems = currentFiltered.slice(displayedCount, displayedCount + pageSize);
+
+                nextItems.forEach(news => {
+                    const newsDiv = document.createElement('div');
+                    newsDiv.className = 'news-item';
+                    newsDiv.innerHTML = `
+                        <span class="news-tag">${news.category || 'گشتی'}</span>
+                        <h3>${news.title}</h3>
+                        <p>${news.content}</p>
+                        <small>${news.date}</small>
+                    `;
+                    container.appendChild(newsDiv);
+                });
+
+                displayedCount += nextItems.length;
+                document.getElementById('loader').style.display = 'none';
+                isLoading = false;
+            }, 500); // کاتێکی کەم بۆ نیشاندانی باری بارکردن
+        }
+
+        // چاودێریکردنی سکرۆلی شاشە
+        window.addEventListener('scroll', () => {
+            if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100) {
+                loadMoreNews();
+            }
+        });
 
         window.onload = fetchNews;
     </script>
