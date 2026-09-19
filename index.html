@@ -24,18 +24,18 @@
       padding: 12px;
     }
 
-    .container { max-width: 850px; margin: 0 auto; }
+    .container { max-width: 800px; margin: 0 auto; }
 
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 0;
+      padding: 12px 0;
       border-bottom: 1px solid var(--border-color);
       margin-bottom: 15px;
     }
 
-    .logo { font-size: 18px; font-weight: bold; color: var(--accent-color); }
+    .logo { font-size: 20px; font-weight: bold; color: var(--accent-color); }
     
     .live-tag {
       background-color: var(--accent-color);
@@ -73,43 +73,9 @@
       border-radius: 8px;
       font-weight: bold;
       cursor: pointer;
-      font-size: 13px;
-    }
-
-    .main-layout {
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-    }
-
-    .sidebar-categories {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      width: 130px;
-      flex-shrink: 0;
-    }
-
-    .cat-btn {
-      background-color: var(--card-bg);
-      color: var(--text-secondary);
-      border: 1px solid var(--border-color);
-      padding: 10px 8px;
-      border-radius: 8px;
-      font-size: 12px;
-      text-align: right;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    .cat-btn.active, .cat-btn:hover {
-      background-color: var(--accent-color);
-      color: #fff;
-      border-color: var(--accent-color);
     }
 
     .feed-container {
-      flex: 1;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -127,8 +93,8 @@
     }
 
     .news-card img {
-      width: 95px;
-      height: 75px;
+      width: 90px;
+      height: 70px;
       object-fit: cover;
       border-radius: 6px;
       flex-shrink: 0;
@@ -146,7 +112,6 @@
       font-size: 13px;
       font-weight: bold;
       line-height: 1.4;
-      color: #ffffff;
       margin-bottom: 4px;
     }
 
@@ -154,20 +119,13 @@
       font-size: 11px;
       color: var(--text-secondary);
       line-height: 1.4;
-      margin-bottom: 6px;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
 
-    .news-date {
-      font-size: 10px;
-      color: var(--accent-color);
-      font-weight: bold;
-    }
-
-    .status-msg { text-align: center; padding: 25px; color: var(--text-secondary); font-size: 13px; width: 100%; }
+    .status-msg { text-align: center; padding: 30px; color: var(--text-secondary); font-size: 13px; }
   </style>
 </head>
 <body>
@@ -183,74 +141,48 @@
       <button class="search-btn" onclick="executeSearch()">سێرچ</button>
     </div>
 
-    <div class="main-layout">
-      <aside class="sidebar-categories">
-        <button class="cat-btn active" onclick="loadNews('all', this)">هەمووی</button>
-        <button class="cat-btn" onclick="loadNews('local', this)">هەواڵی ناوخۆیی</button>
-        <button class="cat-btn" onclick="loadNews('world', this)">هەواڵی جیهانی</button>
-        <button class="cat-btn" onclick="loadNews('sports', this)">هەواڵی وەرزشی</button>
-        <button class="cat-btn" onclick="loadNews('economy', this)">هەواڵی ئابووری</button>
-      </aside>
-
-      <main class="feed-container" id="feedContainer">
-        <div class="status-msg">بارکردنی تازەترین هەواڵەکان...</div>
-      </main>
-    </div>
+    <main class="feed-container" id="feedContainer">
+      <div class="status-msg">بارکردنی تازەترین هەواڵەکان...</div>
+    </main>
   </div>
 
   <script>
     let articlesCache = [];
 
-    // بەکارهێنانی سەرچاوەی کراوەی Awene کێشەی Cloudflare دروست ناکات
-    const feeds = {
-      all: 'https://www.awene.com/rss',
-      local: 'https://www.awene.com/rss',
-      world: 'https://www.awene.com/rss',
-      sports: 'https://www.awene.com/rss',
-      economy: 'https://www.awene.com/rss'
-    };
-
-    async function loadNews(category, btn) {
-      if (btn) {
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-      }
-
+    async function fetchNews() {
       const container = document.getElementById('feedContainer');
-      container.innerHTML = '<div class="status-msg">بارکردنی تازەترین هەواڵەکان...</div>';
-
-      const targetUrl = feeds[category] || feeds.all;
-      const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(targetUrl)}`;
+      
+      // بەکارهێنانی ڕاستەوخۆی API بۆ کەمتەرخەمبوونی کێشەی CORS و Serverless
+      const apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fwww.awene.com%2Frss';
 
       try {
         const response = await fetch(apiUrl);
         const data = await response.json();
 
-        if (data.status === 'ok' && data.items && data.items.length > 0) {
+        if (data.status === 'ok' && data.items.length > 0) {
           articlesCache = data.items.map(item => {
-            const tempDiv = document.createElement("div");
-            tempDiv.innerHTML = item.description || '';
-            const cleanText = tempDiv.textContent || tempDiv.innerText || '';
+            const temp = document.createElement('div');
+            temp.innerHTML = item.description || '';
+            const cleanText = temp.textContent || temp.innerText || '';
 
             return {
               title: item.title,
               link: item.link,
-              date: item.pubDate,
-              description: cleanText.trim().slice(0, 160) + '...',
+              description: cleanText.trim().slice(0, 140) + '...',
               img: item.thumbnail || item.enclosure?.link || ''
             };
           });
 
-          displayArticles(articlesCache);
+          renderArticles(articlesCache);
         } else {
-          container.innerHTML = '<div class="status-msg">هیچ هەواڵێک لەم بەشەدا نییە.</div>';
+          container.innerHTML = '<div class="status-msg">هیچ هەواڵێک بەردەست نییە.</div>';
         }
       } catch (err) {
-        container.innerHTML = '<div class="status-msg">کێشە لە گرێدان ڕوویدا. تکایە دووبارە تاقیبکەرەوە.</div>';
+        container.innerHTML = '<div class="status-msg">کێشە لە گرێدان ڕوویدا. تکایە سەرلەنوێ هەوڵبدەرەوە.</div>';
       }
     }
 
-    function displayArticles(articles) {
+    function renderArticles(articles) {
       const container = document.getElementById('feedContainer');
       container.innerHTML = '';
 
@@ -265,11 +197,9 @@
         card.href = art.link;
         card.target = '_blank';
 
-        const timeString = art.date ? new Date(art.date).toLocaleTimeString('ckb-IQ', { hour: '2-digit', minute: '2-digit' }) : '';
-
         const imgTag = art.img 
           ? `<img src="${art.img}" alt="news" onerror="this.style.display='none'">` 
-          : '<div style="width:95px;height:75px;background:#1e222d;border-radius:6px;flex-shrink:0;"></div>';
+          : '<div style="width:90px;height:70px;background:#1e222d;border-radius:6px;flex-shrink:0;"></div>';
 
         card.innerHTML = `
           ${imgTag}
@@ -278,7 +208,6 @@
               <h2 class="news-title">${art.title}</h2>
               <p class="news-desc">${art.description}</p>
             </div>
-            <span class="news-date">${timeString}</span>
           </div>
         `;
         container.appendChild(card);
@@ -288,7 +217,7 @@
     function executeSearch() {
       const query = document.getElementById('searchInput').value.trim().toLowerCase();
       if (!query) {
-        displayArticles(articlesCache);
+        renderArticles(articlesCache);
         return;
       }
 
@@ -296,14 +225,14 @@
         item.title.toLowerCase().includes(query) || 
         item.description.toLowerCase().includes(query)
       );
-      displayArticles(filtered);
+      renderArticles(filtered);
     }
 
     document.getElementById('searchInput').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') executeSearch();
     });
 
-    loadNews('all');
+    fetchNews();
   </script>
 </body>
 </html>
