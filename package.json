@@ -1,15 +1,21 @@
 {
-  "name": "@workspace/scripts",
-  "version": "0.0.0",
+  "name": "apt-media",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "hello": "tsx ./src/hello.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "vite": "latest"
   },
   "devDependencies": {
-    "@types/node": "catalog:",
-    "tsx": "catalog:"
+    "@vitejs/plugin-react": "latest",
+    "typescript": "latest"
   }
 }
-
