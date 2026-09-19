@@ -56,19 +56,64 @@
     </header>
 
     <div class="app-container" id="newsFeed">
-        <div class="loader" id="loader">لە بارکردنی هەواڵەکاندا...</div>
+        <div class="loader">لە بارکردنی هەواڵە ڕاستەوخۆکاندا...</div>
     </div>
 
     <script>
         let currentCategory = 'all';
 
-        async function fetchNews() {
+        const rssFeeds = {
+            all: 'https://www.rudaw.net/sorani/rss',
+            local: 'https://www.rudaw.net/sorani/kurdistan/rss',
+            sports: 'https://www.rudaw.net/sorani/sports/rss',
+            economy: 'https://www.rudaw.net/sorani/business/rss'
+        };
+
+        async function fetchLiveNews() {
+            const feedUrl = rssFeeds[currentCategory] || rssFeeds.all;
+            // بەکارهێنانی پروکسی ئۆنلاینی کراوە بۆ بڕینی کێشەی بڵۆکبوونی وێبگەڕ
+            const apiProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(feedUrl)}&nocache=${new Date().getTime()}`;
+
             try {
-                const response = await fetch(`/api/news?cat=${currentCategory}`);
-                const newsList = await response.json();
-                renderUI(newsList);
+                const response = await fetch(apiProxy);
+                const data = await response.json();
+                
+                if (data.contents) {
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(data.contents, "text/xml");
+                    const items = xmlDoc.querySelectorAll("item");
+
+                    let liveNews = [];
+                    items.forEach((item, index) => {
+                        if (index < 15) { // ١٥ هەواڵی کۆتا و زیندوو
+                            const title = item.querySelector("title")?.textContent || "";
+                            const link = item.querySelector("link")?.textContent || "#";
+                            const pubDate = item.querySelector("pubDate")?.textContent || "";
+                            
+                            // دۆزینەوەی وێنەی هەواڵەکە
+                            let img = item.querySelector("enclosure")?.getAttribute("url") || 
+                                      item.querySelector("thumbnail")?.getAttribute("url");
+                            
+                            if (!img) {
+                                img = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800';
+                            }
+
+                            liveNews.push({
+                                title: title,
+                                link: link,
+                                img: img,
+                                date: pubDate ? new Date(pubDate).toLocaleTimeString('ckb', { hour: '2-digit', minute: '2-digit' }) : 'ڕاستەوخۆ',
+                                source: 'APT Live'
+                            });
+                        }
+                    });
+
+                    if (liveNews.length > 0) {
+                        renderUI(liveNews);
+                    }
+                }
             } catch (error) {
-                console.error("Fetch error:", error);
+                console.log("هەڵە لە وەرگرتنی داتا:", error);
             }
         }
 
@@ -110,15 +155,18 @@
             element.classList.add('active');
             currentCategory = cat;
             document.getElementById('newsFeed').innerHTML = '<div class="loader">لە بارکردنی هەواڵەکاندا...</div>';
-            fetchNews();
+            fetchLiveNews();
         }
 
         function toggleLike(btn) {
             btn.classList.toggle('liked');
         }
 
-        fetchNews();
-        setInterval(fetchNews, 30000);
+        // وەرگرتنی هەواڵەکان دەستبەجێ
+        fetchLiveNews();
+
+        // نوێکردنەوەی ئۆتۆماتیکی ئۆنلاین هەر ١٥ چڕکە جارێک بەبێ رێنیشاندنەوەی شاشەکە
+        setInterval(fetchLiveNews, 15000);
     </script>
 </body>
 </html>
