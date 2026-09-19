@@ -4,14 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>APT Media</title>
-    <!-- ئایکۆنەکانی Bootstrap -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; user-select: none; }
         body { background-color: #000; color: #fff; overflow: hidden; height: 100vh; width: 100vw; }
         
-        /* بەشی سەرەوە */
         header { 
             position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
             background: linear-gradient(to bottom, rgba(0,0,0,0.95), transparent); 
@@ -22,7 +20,6 @@
         .nav-tabs li { font-size: 15px; color: #aaa; cursor: pointer; padding-bottom: 5px; white-space: nowrap; }
         .nav-tabs li.active { color: #fff; font-weight: bold; border-bottom: 3px solid #ff3b30; }
 
-        /* کانتێنەری سکرۆڵکردنی تیک تۆکی */
         .app-container { height: 100vh; width: 100vw; overflow-y: scroll; scroll-snap-type: y mandatory; scroll-behavior: smooth; }
         
         .news-card { 
@@ -43,7 +40,7 @@
         .action-btn span { font-size: 12px; color: #ddd; }
         .action-btn.liked i { color: #ff3b30; }
 
-        .loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #ff3b30; font-size: 18px; text-align: center; }
+        .loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #ff3b30; font-size: 16px; text-align: center; }
     </style>
 </head>
 <body>
@@ -59,26 +56,19 @@
     </header>
 
     <div class="app-container" id="newsFeed">
-        <div class="loader" id="loader"><i class="bi bi-arrow-repeat spin"></i> لە بارکردنی هەواڵە نوێیەکاندا...</div>
+        <div class="loader" id="loader">لە بارکردنی هەواڵەکاندا...</div>
     </div>
 
     <script>
         let currentCategory = 'all';
 
-        // هێنانی هەواڵەکان لە APIەکەی Vercel کە خۆت دروستت کردووە
         async function loadNews() {
             try {
-                // بەستنەوە بە فایلی api/news.js
                 const response = await fetch(`/api/news?cat=${currentCategory}`);
                 const newsList = await response.json();
 
                 const container = document.getElementById('newsFeed');
                 container.innerHTML = '';
-
-                if (!newsList || newsList.length === 0 || newsList.error) {
-                    container.innerHTML = '<div class="loader">هیچ هەواڵێک بەردەست نییە</div>';
-                    return;
-                }
 
                 newsList.forEach(news => {
                     const card = document.createElement('div');
@@ -99,7 +89,7 @@
                                 <i class="bi bi-heart-fill"></i>
                                 <span>120</span>
                             </button>
-                            <button class="action-btn" onclick="window.open('${news.link}', '_blank')">
+                            <button class="action-btn" onclick="if('${news.link}' !== '#') window.open('${news.link}', '_blank')">
                                 <i class="bi bi-box-arrow-up-right"></i>
                                 <span>خوێندنەوە</span>
                             </button>
@@ -109,7 +99,7 @@
                 });
 
             } catch (err) {
-                document.getElementById('newsFeed').innerHTML = '<div class="loader">کێشەیەک ڕوویدا لە بارکردنی هەواڵەکاندا</div>';
+                console.error("Error fetching news:", err);
             }
         }
 
@@ -125,10 +115,7 @@
             btn.classList.toggle('liked');
         }
 
-        // یەکەم جار هێنانی هەواڵەکان
         loadNews();
-
-        // ڕیفرێش بوونەوەی ئۆتۆماتیکی لە پاشبنەمادا (هەر ٣٠ چڕکە جارێک)
         setInterval(loadNews, 30000);
     </script>
 </body>
