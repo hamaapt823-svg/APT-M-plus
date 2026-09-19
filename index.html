@@ -201,12 +201,13 @@
   <script>
     let articlesCache = [];
 
+    // سەرچاوەی کراوەی ڕووداو (ڕاستەوخۆ کار دەکات)
     const feeds = {
-      all: 'https://www.kurdistan24.net/ckb/rss',
-      local: 'https://www.kurdistan24.net/ckb/rss/kurdistan',
-      world: 'https://www.kurdistan24.net/ckb/rss/world',
-      sports: 'https://www.kurdistan24.net/ckb/rss/sport',
-      economy: 'https://www.kurdistan24.net/ckb/rss/economy'
+      all: 'https://www.rudaw.net/sorani/rss',
+      local: 'https://www.rudaw.net/sorani/kurdistan/rss',
+      world: 'https://www.rudaw.net/sorani/world/rss',
+      sports: 'https://www.rudaw.net/sorani/sports/rss',
+      economy: 'https://www.rudaw.net/sorani/business/rss'
     };
 
     async function loadNews(category, btn) {
@@ -218,65 +219,35 @@
       const container = document.getElementById('feedContainer');
       container.innerHTML = '<div class="status-msg">بارکردنی تازەترین هەواڵەکان...</div>';
 
-      const rssUrl = feeds[category] || feeds.all;
+      const targetUrl = feeds[category] || feeds.all;
+      const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(targetUrl)}`;
 
-      // هەوڵدان لە ڕێگەی api.rss2json.com
       try {
-        const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`);
-        const data = await res.json();
+        const response = await fetch(apiUrl);
+        const data = await response.json();
 
-        if (data.status === 'ok' && data.items.length > 0) {
+        if (data.status === 'ok' && data.items && data.items.length > 0) {
           articlesCache = data.items.map(item => {
-            const temp = document.createElement("div");
-            temp.innerHTML = item.description || '';
-            const cleanText = temp.textContent || temp.innerText || '';
+            // پاککردنەوەی تاگەکان بۆ وەدەستهێنانی پوختەی هەواڵەکە
+            const tempDiv = document.createElement("div");
+            tempDiv.innerHTML = item.description || '';
+            const cleanText = tempDiv.textContent || tempDiv.innerText || '';
 
             return {
               title: item.title,
               link: item.link,
               date: item.pubDate,
-              description: cleanText.trim().slice(0, 150) + '...',
+              description: cleanText.trim().slice(0, 160) + '...',
               img: item.thumbnail || item.enclosure?.link || ''
             };
           });
 
           displayArticles(articlesCache);
-          return;
+        } else {
+          container.innerHTML = '<div class="status-msg">هیچ هەواڵێک لەم بەشەدا نییە.</div>';
         }
-      } catch (e) {
-        console.log('Primary proxy failed, trying backup...');
-      }
-
-      // ئەگەر یەکەم سەرکەوتوو نەبوو، ڕاستەوخۆ دەچێتە سەر Backup Proxy
-      try {
-        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`);
-        const data = await res.json();
-        
-        if (data.contents) {
-          const parser = new DOMParser();
-          const xml = parser.parseFromString(data.contents, "text/xml");
-          const items = xml.querySelectorAll("item");
-
-          articlesCache = [];
-          items.forEach(item => {
-            const rawDesc = item.querySelector("description")?.textContent || '';
-            const temp = document.createElement("div");
-            temp.innerHTML = rawDesc;
-
-            articlesCache.push({
-              title: item.querySelector("title")?.textContent || '',
-              link: item.querySelector("link")?.textContent || '#',
-              date: item.querySelector("pubDate")?.textContent || '',
-              description: (temp.textContent || temp.innerText || '').trim().slice(0, 150) + '...',
-              img: item.querySelector("enclosure")?.getAttribute("url") || ''
-            });
-          });
-
-          displayArticles(articlesCache);
-          return;
-        }
-      } catch (e) {
-        container.innerHTML = '<div class="status-msg">کێشە لە گرێدان ڕوویدا. تکایە دوابارە هەوڵبدەرەوە.</div>';
+      } catch (err) {
+        container.innerHTML = '<div class="status-msg">کێشە لە گرێدان ڕوویدا. تکایە دووبارە تاقیبکەرەوە.</div>';
       }
     }
 
@@ -285,7 +256,7 @@
       container.innerHTML = '';
 
       if (articles.length === 0) {
-        container.innerHTML = '<div class="status-msg">هیچ هەواڵێک نەدۆزرایەوە.</div>';
+        container.innerHTML = '<div class="status-msg">هیچ ئەنجامێک نەدۆزرایەوە.</div>';
         return;
       }
 
