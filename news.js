@@ -1,61 +1,83 @@
-export default async function handler(req, res) {
-  // ڕێگەدان بە CORS بۆ ئەوەی وێبگەڕ بڵۆکی نەکات
+const Parser = require('rss-parser');
+
+const parser = new Parser();
+
+const sources = [
+  { category: 'ناوخۆیی', url: 'https://www.rudaw.net/sorani/kurdistan/rss' },
+  { category: 'وەرزشی', url: 'https://www.rudaw.net/sorani/sports/rss' },
+  { category: 'ئابووری', url: 'https://www.rudaw.net/sorani/business/rss' },
+  { category: 'گشتی', url: 'https://www.rudaw.net/sorani/rss' },
+];
+
+// کاش بۆ ئەوەی هەر جار هەواڵ نەهێنین
+let cache = {
+  data: [],
+  lastFetch: 0,
+};
+
+const CACHE_DURATION = 5 * 60 * 1000; // ٥ خولەک
+
+async function fetchNews() {
+  const now = Date.now();
+
+  // ئەگەر کاشەکە نوێیە، هەمان داتا بگەڕێنەوە
+  if (cache.data.length > 0 && now - cache.lastFetch < CACHE_DURATION) {
+    return cache.data;
+  }
+
+  const allNews = [];
+
+  for (const source of sources) {
+    try {
+      const feed = await parser.parseURL(source.url);
+      feed.items.forEach((item) => {
+        allNews.push({
+          id: item.guid || item.link,
+          title: item.title,
+          summary: item.contentSnippet || item.content || '',
+          category: source.category,
+          url: item.link,
+          time: item.pubDate
+            ? new Date(item.pubDate).toLocaleTimeString('ckb', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : '',
+          publisher: 'APT Media',
+          image: item.enclosure
+            ? item.enclosure.url
+            : 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800',
+        });
+      });
+    } catch (err) {
+      console.log('خەتا لە هێنانی هەواڵی: ' + source.category, err.message);
+    }
+  }
+
+  // ڕیزکردن بەپێی کات (نوێترین سەرەتا)
+  allNews.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+  cache.data = allNews;
+  cache.lastFetch = now;
+
+  return allNews;
+}
+
+module.exports = async (req, res) => {
+  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET');
-  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  const { cat = 'all' } = req.query;
-
-  const feeds = {
-    all: 'https://www.rudaw.net/sorani/rss',
-    local: 'https://www.rudaw.net/sorani/kurdistan/rss',
-    sports: 'https://www.rudaw.net/sorani/sports/rss',
-    economy: 'https://www.rudaw.net/sorani/business/rss'
-  };
-
-  const targetUrl = feeds[cat] || feeds.all;
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
   try {
-    const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(targetUrl)}`);
-    const data = await response.json();
-
-    if (data.status === 'ok' && data.items && data.items.length > 0) {
-      const news = data.items.map((item) => ({
-        title: item.title,
-        link: item.link,
-        img: item.thumbnail || (item.enclosure ? item.enclosure.link : 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800'),
-        date: new Date(item.pubDate).toLocaleTimeString('ckb', { hour: '2-digit', minute: '2-digit' }),
-        source: 'APT Live'
-      }));
-      return res.status(200).json(news);
-    } else {
-      throw new Error('فەیڵ بوو لە هێنانی RSS');
-    }
+    const news = await fetchNews();
+    res.status(200).json(news);
   } catch (error) {
-    // هەواڵی بەکئەپ ئەگەر ئینتەرنێت پچڕا یان RSS خاو بوو
-    const fallbackNews = [
-      {
-        title: 'کەشناسی هەرێم: شەپۆلێکی بارانبارین و بەفر زۆربەی ناوچەکان دەگرێتەوە.',
-        link: 'https://www.rudaw.net',
-        img: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=800',
-        date: 'ئێستا',
-        source: 'APT News'
-      },
-      {
-        title: 'بەرزبوونەوەی نرخەکانی زێڕ و نەوت لە بازاڕە جیهانییەکاندا.',
-        link: 'https://www.rudaw.net',
-        img: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800',
-        date: 'پێش ٥ خولەک',
-        source: 'APT Economy'
-      },
-      {
-        title: 'یارییەکانی قۆناغی داهاتووی خولی پاڵەوانەکان بەڕێوەدەچێت.',
-        link: 'https://www.rudaw.net',
-        img: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800',
-        date: 'پێش ١٠ خولەک',
-        source: 'APT Sport'
-      }
-    ];
-    return res.status(200).json(fallbackNews);
+    console.error('هەڵە:', error);
+    res.status(500).json({ error: 'هەڵە لە هێنانی هەواڵەکان' });
   }
-}
+};
