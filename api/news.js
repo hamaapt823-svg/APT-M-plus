@@ -6,11 +6,8 @@ const redis = new Redis({
 })
 
 export default async function handler(req, res) {
-  // تەنها ڕێگە بە نامە و زانیاری ڕاستەقینە دەدات بێتە ژوورەوە
   if (req.method === 'POST') {
     const update = req.body;
-    
-    // خوێندنەوەی تێکستی نامەکە یان پۆستی کەناڵ بە ڕوونی
     const messageText = update.message?.text || update.channel_post?.text;
 
     if (messageText) {
@@ -20,10 +17,9 @@ export default async function handler(req, res) {
       }));
     }
 
-    return.status(200).json({ success: true });
+    return res.status(200).json({ success: true });
   }
 
-  // نیشاندانی هەموو هەواڵ و نامەکان لە ئەپەکەتدا
   try {
     const news = await redis.lrange('news_list', 0, -1);
     const parsedNews = news.map(item => JSON.parse(item));
