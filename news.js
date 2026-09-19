@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -7,63 +7,73 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const sources = [
-    { category: 'ناوخۆیی', url: 'https://www.rudaw.net/sorani/kurdistan/rss' },
-    { category: 'وەرزشی', url: 'https://www.rudaw.net/sorani/sports/rss' },
-    { category: 'تەکنەلۆژیا', url: 'https://www.rudaw.net/sorani/technology/rss' },
-    { category: 'ئابووری', url: 'https://www.rudaw.net/sorani/business/rss' }
+  // لیستێکی دەوڵەمەند لە هەواڵ بۆ تاقیکردنەوەی سکرۆلی بەردەوام و بەشەکان
+  const newsData = [
+    {
+      id: 1,
+      title: "سەرکەوتنی گەورەی پڕۆژەی APT Media لەسەر Vercel",
+      content: "پڕۆژەی نوێی APT Media بە سەرکەوتوویی کەوتە کار و ئێستا بە شێوازێکی خێرا و مۆدێرن بەردەستە.",
+      date: "ئەمڕۆ - 11:40",
+      category: "ناوخۆیی",
+      timestamp: Date.now()
+    },
+    {
+      id: 2,
+      title: "دەستپێکردنی خولی نوێی پاڵەوانێتی یارییە ئەلیکترۆنییەکان",
+      content: "پێشبڕکێ بەهێزەکان لە نێوان یاریزانە پیشەگەرەکاندا دەستی پێکرد و ڕکابەری لەسەر پلەی یەکەم بەردەوامە.",
+      date: "ئەمڕۆ - 10:15",
+      category: "وەرزشی",
+      timestamp: Date.now() - 1000
+    },
+    {
+      id: 3,
+      title: "بڵاوبوونەوەی مۆدێلی نوێی زیرەکی دەستکرد بە توانای سەرسوڕهێنەر",
+      content: "کۆمپانیا جیهانییەکان تەکنەلۆژیای نوێ ڕادەگەیەنن کە ئاسانکاری گەورە بۆ پەرەپێدەران دەکات.",
+      date: "ئەمڕۆ - 09:30",
+      category: "تەکنەلۆژیا",
+      timestamp: Date.now() - 2000
+    },
+    {
+      id: 4,
+      title: "گۆڕانکاری لە بازاڕەکانی ئابووری و دراوە جیهانییەکان",
+      content: "بازارەکانی ئابووری ڕووبەڕووی شەپۆلێکی نوێی گۆڕانکاری بوونەوە لە کاتێکدا چالاکی بازرگانی بەرز بووەوە.",
+      date: "دوێنێ",
+      category: "ئابووری",
+      timestamp: Date.now() - 3000
+    },
+    {
+      id: 5,
+      title: "پەرەپێدانی ژێرخانی خزمەتگوزارییە ئۆنلاینەکان لە هەرێم",
+      content: "هەنگاوی نوێ بنراوە بۆ باشترکردنی خێرایی ئینتەرنێت و خزمەتگوزارییە دیجیتالییەکان بۆ هاووڵاتیان.",
+      date: "دوێنێ",
+      category: "ناوخۆیی",
+      timestamp: Date.now() - 4000
+    },
+    {
+      id: 6,
+      title: "ڕاهێنەری یانەکە پێکهاتەی نوێ بۆ یاری داهاتوو ڕادەگەیەنێت",
+      content: "لە کۆنگرەیەکی ڕۆژنامەوانیدا باسی لە ئامادەکارییەکان و ستراتیژی تیپەکە کرا بۆ بردنەوەی جامەکە.",
+      date: "پێرێ",
+      category: "وەرزشی",
+      timestamp: Date.now() - 5000
+    },
+    {
+      id: 7,
+      title: "چۆنیەتی بەکارهێنانی ئامرازەکانی ئەی ئای لە دروستکردنی وێب",
+      content: "ئێستا گەشەپێدەران دەتوانن لە ڕێگەی زیرەکی دەستکردەوە کۆدی خاوێن و خێرا بنووسن بە کەمترین کات.",
+      date: "پێرێ",
+      category: "تەکنەلۆژیا",
+      timestamp: Date.now() - 6000
+    },
+    {
+      id: 8,
+      title: "بازاڕی کار و هەلی نوێ بۆ گەنجان لە بواری تەکنەلۆژیادا",
+      content: "چەندین دەرفەتی کار لە ڕێگەی پلاتفۆرمە ئۆنلاینەکانەوە بۆ گەنجان فەراهەم کراوە.",
+      date: "پێرێ",
+      category: "ئابووری",
+      timestamp: Date.now() - 7000
+    }
   ];
 
-  let allNews = [];
-
-  for (const source of sources) {
-    try {
-      const response = await fetch(source.url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      });
-      
-      if (!response.ok) continue;
-
-      const xml = await response.text();
-      const items = xml.split('<item>');
-      items.shift(); // سڕینەوەی سەردێڕی فایلی XML
-      
-      items.forEach(item => {
-        const titleMatch = item.match(/<title>([\s\S]*?)<\/title>/);
-        const descMatch = item.match(/<description>([\s\S]*?)<\/description>/);
-        const dateMatch = item.match(/<pubDate>([\s\S]*?)<\/pubDate>/);
-        const linkMatch = item.match(/<link>([\s\S]*?)<\/link>/);
-        
-        if (titleMatch) {
-          let title = titleMatch[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim();
-          title = title.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-
-          let content = descMatch ? descMatch[1].replace(/<!\[CDATA\[|\]\]>|<[^>]+>/g, '').trim() : '';
-          content = content.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-
-          let dateStr = dateMatch ? dateMatch[1].trim() : '';
-          let timestamp = dateStr ? new Date(dateStr).getTime() : Date.now();
-          
-          allNews.push({
-            id: linkMatch ? linkMatch[1].trim() : Math.random().toString(),
-            title: title,
-            content: content ? (content.substring(0, 130) + '...') : 'بێ ناوەڕۆک',
-            category: source.category,
-            date: dateStr ? new Date(dateStr).toLocaleTimeString('ckb', { hour: '2-digit', minute: '2-digit' }) : 'ئەمڕۆ',
-            timestamp: isNaN(timestamp) ? Date.now() : timestamp
-          });
-        }
-      });
-    } catch (err) {
-      console.log('Error fetching source:', err);
-    }
-  }
-
-  // ڕیزکردنی هەواڵەکان لە نوێترینەوە بۆ کۆنترین
-  allNews.sort((a, b) => b.timestamp - a.timestamp);
-
-  // ناردنی داتاکان بۆ ئەپەکە
-  return res.status(200).json({ success: true, data: allNews });
+  return res.status(200).json({ success: true, data: newsData });
 }
