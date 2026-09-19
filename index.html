@@ -1,162 +1,144 @@
 <!DOCTYPE html>
 <html lang="ckb" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>APT M Plus - Ultra Live AI News</title>
-  <style>
-    :root {
-      --bg-color: #090a0f;
-      --card-bg: #161922;
-      --accent-color: #e2001a;
-      --border-color: #2a2e3d;
-      --text-color: #ffffff;
-      --text-secondary: #a0a5b5;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      font-family: system-ui, -apple-system, sans-serif;
-      direction: rtl;
-      padding: 12px;
-    }
-
-    .container { max-width: 800px; margin: 0 auto; }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border-color);
-      margin-bottom: 15px;
-    }
-
-    .logo { font-size: 18px; font-weight: bold; color: var(--accent-color); display: flex; align-items: center; gap: 6px; }
-    
-    .live-badge {
-      background-color: var(--accent-color);
-      color: #fff;
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 12px;
-      font-weight: bold;
-      animation: pulse 1.5s infinite;
-    }
-
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.4; }
-      100% { opacity: 1; }
-    }
-
-    .feed-container {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .news-card {
-      background-color: var(--card-bg);
-      border-radius: 8px;
-      padding: 12px;
-      border: 1px solid var(--border-color);
-      border-right: 4px solid var(--accent-color);
-      text-decoration: none;
-      color: #fff;
-      animation: fadeIn 0.4s ease-in-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .news-title {
-      font-size: 14px;
-      font-weight: bold;
-      color: #ffffff;
-      margin-bottom: 5px;
-    }
-
-    .news-desc {
-      font-size: 12px;
-      color: var(--text-secondary);
-      line-height: 1.5;
-    }
-
-    .news-meta {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 8px;
-      font-size: 10px;
-      color: #e2001a;
-      font-weight: bold;
-    }
-
-    .status {
-      text-align: center;
-      color: var(--text-secondary);
-      font-size: 13px;
-      padding: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kurdistan+ | کوردستانی پڵەس</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Noto Naskh Arabic', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .news-card {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .news-card:hover {
+            transform: translateY(-2px);
+            border-color: #38bdf8;
+        }
+    </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col">
 
-  <div class="container">
-    <header>
-      <div class="logo">
-        APT M Plus
-        <span style="font-size: 10px; border: 1px solid var(--accent-color); padding: 2px 5px; border-radius: 4px;">Real-Time AI</span>
-      </div>
-      <div class="live-badge">🔴 چرکە بە چرکە LIVE</div>
+    <!-- Header Navigation Bar -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-xl font-bold">
+                    K+
+                </div>
+                <h1 class="text-2xl font-bold text-blue-400">Kurdistan+</h1>
+            </div>
+            
+            <div class="flex-1 max-w-md mx-4">
+                <input type="text" id="searchInput" onkeyup="filterNews()" placeholder="گەڕان لە هەواڵەکان..." 
+                    class="w-full bg-slate-800 border border-slate-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-blue-500 text-sm">
+            </div>
+
+            <div class="flex items-center space-x-2 space-x-reverse">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-400">
+                    <span class="w-2 h-2 mr-1 bg-green-500 rounded-full animate-pulse ml-1"></span> ڕاستەوخۆ
+                </span>
+            </div>
+        </div>
     </header>
 
-    <main class="feed-container" id="feedContainer">
-      <div class="status" id="status">پەیوەستبوون بە سێرڤەری ڕاستەوخۆ...</div>
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
+        
+        <!-- AI Summary Section -->
+        <section class="mb-8">
+            <h2 class="text-xl font-bold text-slate-200 mb-4 flex items-center">
+                <svg class="w-5 h-5 ml-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                پوختەی ڕۆژنامەوانی AI
+            </h2>
+            <div id="aiSummary" class="bg-slate-800/60 border border-slate-700 rounded-xl p-5 text-slate-300 leading-relaxed min-h-[80px]">
+                چاوەڕوانی بەستنەوەی سێرڤەر و ئامادەکردنی پوختەی هەواڵەکان...
+            </div>
+        </section>
+
+        <!-- General News Feed Section -->
+        <section>
+            <h2 class="text-xl font-bold text-slate-200 mb-4">گشت هەواڵە زیندوەکان</h2>
+            <div id="newsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- News items will be populated here dynamically -->
+            </div>
+        </section>
+
     </main>
-  </div>
 
-  <script>
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${location.host}`);
+    <!-- Footer -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-4 text-center text-slate-500 text-sm">
+        کوردستانی پڵەس &copy; 2026 - تەواوی مافەکانی پارێزراوە
+    </footer>
 
-    const feedContainer = document.getElementById('feedContainer');
-    const statusEl = document.getElementById('status');
+    <!-- WebSocket & Logic Script -->
+    <script>
+        let allNews = [];
+        const ws = new WebSocket('wss://65c23c8e-be05-4783-8d39-7bfc1a4148e3-00-huvnkjukli39.pike.replit.dev');
 
-    ws.onopen = () => {
-      statusEl.innerText = 'پەیوەست بوو! چاوەڕێی هەواڵی نوێ بکه...';
-    };
+        ws.onopen = () => {
+            console.log('پەیوەندی لەگەڵ سێرڤەردا سەرکەوتوو بوو');
+        };
 
-    ws.onmessage = (event) => {
-      const news = JSON.parse(event.data);
-      
-      if (statusEl) statusEl.remove();
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                
+                if (data.summary) {
+                    document.getElementById('aiSummary').innerText = data.summary;
+                }
 
-      const card = document.createElement('a');
-      card.className = 'news-card';
-      card.href = news.link;
-      card.target = '_blank';
+                if (data.items) {
+                    allNews = data.items;
+                    renderNews(allNews);
+                }
+            } catch (err) {
+                console.error('کێشە لە خوێندنەوەی دراوەکان:', err);
+            }
+        };
 
-      card.innerHTML = `
-        <div class="news-title">${news.title}</div>
-        <div class="news-desc">${news.summary}</div>
-        <div class="news-meta">
-          <span>✨ پوختەکراو بە Gemini AI</span>
-          <span>${news.time}</span>
-        </div>
-      `;
+        function renderNews(items) {
+            const newsGrid = document.getElementById('newsGrid');
+            newsGrid.innerHTML = '';
 
-      feedContainer.insertBefore(card, feedContainer.firstChild);
-    };
+            if(items.length === 0) {
+                newsGrid.innerHTML = `<div class="col-span-full text-slate-500 text-center py-6">هیچ هەواڵێک نەدۆزرایەوە.</div>`;
+                return;
+            }
 
-    ws.onclose = () => {
-      if (statusEl) statusEl.innerText = 'پەیوەندی پچڕا. هەوڵی بەستنەوە دەدرێتەوە...';
-    };
-  </script>
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'news-card p-4 rounded-xl flex flex-col justify-between';
+                card.innerHTML = `
+                    <div>
+                        <div class="text-xs text-blue-400 mb-2">${item.pubDate || 'نوێترین'}</div>
+                        <h3 class="font-bold text-slate-100 mb-2 leading-snug">${item.title}</h3>
+                        <p class="text-xs text-slate-400 line-clamp-3 mb-4">${item.contentSnippet || item.snippet || ''}</p>
+                    </div>
+                    <a href="${item.link}" target="_blank" class="text-xs text-blue-400 hover:underline inline-block mt-auto font-semibold">
+                        درێژەی هەواڵ &larr;
+                    </a>
+                `;
+                newsGrid.appendChild(card);
+            });
+        }
+
+        function filterNews() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allNews.filter(news => 
+                news.title.toLowerCase().includes(query) || 
+                (news.contentSnippet && news.contentSnippet.toLowerCase().includes(query))
+            );
+            renderNews(filtered);
+        }
+    </script>
 </body>
 </html>
