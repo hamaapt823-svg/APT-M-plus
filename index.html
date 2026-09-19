@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APT Media - هەواڵەکان</title>
-    <!-- FontAwesome بۆ ئایکۆنەکان -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>APT Media</title>
+    <!-- ئایکۆنەکانی Bootstrap (خێراتر و باوەڕپێکراوترن) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: system-ui, -apple-system, sans-serif;
             user-select: none;
         }
 
@@ -24,30 +24,31 @@
             width: 100vw;
         }
 
-        /* بەشی سەرەوە - Navigation Header */
+        /* بەشی سەرەوە */
         header {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             z-index: 100;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.3), transparent);
             padding: 15px 0 10px;
             text-align: center;
         }
 
         .logo {
             color: #ff3b30;
-            font-size: 22px;
-            font-weight: bold;
+            font-size: 24px;
+            font-weight: 800;
             letter-spacing: 1px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
 
         .nav-tabs {
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 15px;
             list-style: none;
             overflow-x: auto;
             padding: 0 10px;
@@ -55,7 +56,7 @@
 
         .nav-tabs li {
             font-size: 15px;
-            color: #ccc;
+            color: #aaa;
             cursor: pointer;
             padding-bottom: 5px;
             transition: all 0.3s;
@@ -68,7 +69,7 @@
             border-bottom: 3px solid #ff3b30;
         }
 
-        /* کانتێنەری سەرەکی سکرۆڵکردنی تیک تۆکی (Snap Scroll) */
+        /* کانتێنەری سەرەکی سکرۆڵکردن */
         .app-container {
             height: 100vh;
             width: 100vw;
@@ -77,42 +78,45 @@
             scroll-behavior: smooth;
         }
 
-        /* هەر هەواڵێک - Full Screen Card */
+        /* کارتی هەواڵ */
         .news-card {
             height: 100vh;
             width: 100vw;
             scroll-snap-align: start;
             position: relative;
-            background-color: #111;
+            background-color: #050505;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .news-video {
+        .news-bg {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            filter: brightness(0.75);
         }
 
-        /* سێبەری سەر ڤیدیۆکە بۆ ئاسان خوێندنەوەی دەقەکان */
         .overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to top, rgba(0,0,0,0.85) 20%, transparent 60%, rgba(0,0,0,0.5) 100%);
-            pointer-events: none;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 10%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.6) 100%);
         }
 
-        /* زانیارییەکانی هەواڵ - لای چەپ و خوارەوە */
+        /* زانیارییەکانی هەواڵ */
         .news-details {
             position: absolute;
-            bottom: 30px;
+            bottom: 40px;
             right: 80px;
             left: 20px;
             z-index: 10;
+        }
+
+        .badge-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
         }
 
         .badge {
@@ -122,39 +126,36 @@
             border-radius: 12px;
             font-size: 12px;
             font-weight: bold;
-            display: inline-block;
-            margin-bottom: 8px;
         }
 
         .news-time {
             font-size: 12px;
-            color: #aaa;
-            margin-right: 8px;
+            color: #ccc;
         }
 
         .publisher {
-            font-size: 16px;
-            font-weight: bold;
+            font-size: 15px;
+            font-weight: 700;
             margin-bottom: 6px;
-            color: #fff;
+            color: #ff3b30;
         }
 
         .news-title {
             font-size: 18px;
-            line-height: 1.4;
-            color: #eee;
-            font-weight: 500;
+            line-height: 1.5;
+            color: #fff;
+            font-weight: 600;
         }
 
-        /* دوگمەکانی لایک و کۆمێنت - لای ڕاست */
+        /* دوگمەکانی لای ڕاست */
         .action-bar {
             position: absolute;
-            bottom: 40px;
+            bottom: 50px;
             right: 15px;
             z-index: 10;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 22px;
             align-items: center;
         }
 
@@ -166,13 +167,9 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 5px;
-            font-size: 24px;
-            transition: transform 0.2s;
-        }
-
-        .action-btn:active {
-            transform: scale(1.2);
+            gap: 4px;
+            font-size: 26px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
 
         .action-btn span {
@@ -183,173 +180,169 @@
         .action-btn.liked i {
             color: #ff3b30;
         }
+
+        /* بارکردن (Loading) */
+        .loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff3b30;
+            font-size: 20px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
-    <!-- بەشی تابی سەرەوە -->
     <header>
         <div class="logo">APT Media</div>
         <ul class="nav-tabs">
-            <li class="active" onclick="filterCategory('all', this)">گشتی</li>
-            <li onclick="filterCategory('local', this)">ناوخۆیی</li>
-            <li onclick="filterCategory('sports', this)">وەرزشی</li>
-            <li onclick="filterCategory('economy', this)">ئابووری</li>
+            <li class="active" onclick="filterNews('گشتی', this)">گشتی</li>
+            <li onclick="filterNews('ناوخۆیی', this)">ناوخۆیی</li>
+            <li onclick="filterNews('وەرزشی', this)">وەرزشی</li>
+            <li onclick="filterNews('ئابووری', this)">ئابووری</li>
         </ul>
     </header>
 
-    <!-- کانتێنەری سەرەکی هەواڵەکان -->
     <div class="app-container" id="newsFeed">
-
-        <!-- هەواڵی ١: وەرزشی -->
-        <div class="news-card" data-category="sports">
-            <video class="news-video" loop autoplay muted playsinline src="https://assets.mixkit.co/videos/preview/mixkit-news-anchor-reporting-live-42838-large.mp4"></video>
-            <div class="overlay"></div>
-            
-            <div class="news-details">
-                <div>
-                    <span class="badge">وەرزشی</span>
-                    <span class="news-time">پێش ٥ خولەک</span>
-                </div>
-                <div class="publisher">APT Sport</div>
-                <div class="news-title">یانەی بەرشەلۆنە سەرکەوتنێکی گەورەی لە خولی یانە پاڵەوانەکان بەدەستهێنا.</div>
-            </div>
-
-            <div class="action-bar">
-                <button class="action-btn" onclick="toggleLike(this)">
-                    <i class="fa-solid fa-heart"></i>
-                    <span class="like-count">1.2k</span>
-                </button>
-                <button class="action-btn" onclick="alert('بەشی کۆمێنتەکان')">
-                    <i class="fa-solid fa-comment-dots"></i>
-                    <span>245</span>
-                </button>
-                <button class="action-btn" onclick="shareNews()">
-                    <i class="fa-solid fa-share"></i>
-                    <span>شێر</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- هەواڵی ٢: ئابووری -->
-        <div class="news-card" data-category="economy">
-            <video class="news-video" loop muted playsinline src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-with-financial-data-41318-large.mp4"></video>
-            <div class="overlay"></div>
-
-            <div class="news-details">
-                <div>
-                    <span class="badge">ئابووری</span>
-                    <span class="news-time">پێش ١٥ خولەک</span>
-                </div>
-                <div class="publisher">APT Economy</div>
-                <div class="news-title">نرخی دۆلار لە بازاڕەکانی هەرێمی کوردستان و عێراق گۆڕانکاری بەسەردا هات.</div>
-            </div>
-
-            <div class="action-bar">
-                <button class="action-btn" onclick="toggleLike(this)">
-                    <i class="fa-solid fa-heart"></i>
-                    <span class="like-count">850</span>
-                </button>
-                <button class="action-btn" onclick="alert('بەشی کۆمێنتەکان')">
-                    <i class="fa-solid fa-comment-dots"></i>
-                    <span>98</span>
-                </button>
-                <button class="action-btn" onclick="shareNews()">
-                    <i class="fa-solid fa-share"></i>
-                    <span>شێر</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- هەواڵی ٣: ناوخۆیی -->
-        <div class="news-card" data-category="local">
-            <video class="news-video" loop muted playsinline src="https://assets.mixkit.co/videos/preview/mixkit-hands-holding-a-smartphone-with-a-green-screen-41527-large.mp4"></video>
-            <div class="overlay"></div>
-
-            <div class="news-details">
-                <div>
-                    <span class="badge">ناوخۆیی</span>
-                    <span class="news-time">پێش ٣٠ خولەک</span>
-                </div>
-                <div class="publisher">APT Local</div>
-                <div class="news-title">حکومەتی هەرێمی کوردستان بڕیارێکی نوێی لەبارەی پڕۆژەکانی ڕێگەوبان دەرکرد.</div>
-            </div>
-
-            <div class="action-bar">
-                <button class="action-btn" onclick="toggleLike(this)">
-                    <i class="fa-solid fa-heart"></i>
-                    <span class="like-count">3.4k</span>
-                </button>
-                <button class="action-btn" onclick="alert('بەشی کۆمێنتەکان')">
-                    <i class="fa-solid fa-comment-dots"></i>
-                    <span>512</span>
-                </button>
-                <button class="action-btn" onclick="shareNews()">
-                    <i class="fa-solid fa-share"></i>
-                    <span>شێر</span>
-                </button>
-            </div>
-        </div>
-
+        <div class="loader" id="loader">لە بارکردنی هەواڵە زیندوەکاندا...</div>
     </div>
 
-    <!-- فەنکشنەکانی JavaScript -->
     <script>
-        // لایک کردنی هەواڵ
-        function toggleLike(btn) {
-            btn.classList.toggle('liked');
-            let countSpan = btn.querySelector('.like-count');
-            let currentCount = parseFloat(countSpan.innerText);
-            
-            if (btn.classList.contains('liked')) {
-                countSpan.innerText = (currentCount + 0.1).toFixed(1) + 'k';
-            } else {
-                countSpan.innerText = (currentCount - 0.1).toFixed(1) + 'k';
+        // بەکارهێنانی RSS Feed بۆ هێنانی چڕوپر و بەردەوامی هەواڵەکان ڕاستەوخۆ
+        const newsFeeds = [
+            { category: 'گشتی', url: 'https://api.rss2json.com/v1/api.json?rss_url=https://www.rudaw.net/kurmanci/rss' },
+            { category: 'ناوخۆیی', url: 'https://api.rss2json.com/v1/api.json?rss_url=https://www.rudaw.net/sorani/kurdistan/rss' },
+            { category: 'وەرزشی', url: 'https://api.rss2json.com/v1/api.json?rss_url=https://www.rudaw.net/sorani/sports/rss' },
+            { category: 'ئابووری', url: 'https://api.rss2json.com/v1/api.json?rss_url=https://www.rudaw.net/sorani/business/rss' }
+        ];
+
+        let allNewsData = [];
+
+        // هێنانی هەواڵەکان لە سێرڤەرەوە (چرکە بە چرکە نوێ دەبێتەوە)
+        async function fetchLiveNews() {
+            try {
+                let fetchedArticles = [];
+                for (let feed of newsFeeds) {
+                    const res = await fetch(feed.url);
+                    const data = await res.json();
+                    if (data.items) {
+                        data.items.forEach(item => {
+                            // دۆزینەوەی وێنە لە ناو هەواڵەکەدا
+                            let imgUrl = item.thumbnail || (item.enclosure ? item.enclosure.link : null);
+                            if(!imgUrl) {
+                                imgUrl = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=1000'; // وێنەی جێگرەوە
+                            }
+
+                            fetchedArticles.push({
+                                title: item.title,
+                                category: feed.category,
+                                time: new Date(item.pubDate).toLocaleTimeString('ckb', {hour: '2-digit', minute:'2-digit'}),
+                                publisher: 'APT Live News',
+                                image: imgUrl,
+                                link: item.link,
+                                likes: Math.floor(Math.random() * 500) + 50
+                            });
+                        });
+                    }
+                }
+                
+                allNewsData = fetchedArticles;
+                document.getElementById('loader').style.display = 'none';
+                renderNews(allNewsData);
+
+            } catch (error) {
+                document.getElementById('loader').innerText = 'کێشەیەک ڕوویدا لە هێنانی هەواڵەکان!';
             }
         }
 
-        // شێرکردنی هەواڵ
-        function shareNews() {
-            if (navigator.share) {
-                navigator.share({
-                    title: 'APT Media',
-                    text: 'ئەم هەواڵە لە APT Media ببینە!',
-                    url: window.location.href,
-                });
+        // ڕەندەرکردنی هەواڵەکان لەسەر شاشە
+        function renderNews(newsList) {
+            const container = document.getElementById('newsFeed');
+            container.innerHTML = '';
+
+            if(newsList.length === 0) {
+                container.innerHTML = '<div class="loader">هیچ هەواڵێک بەردەست نییە</div>';
+                return;
+            }
+
+            newsList.forEach((news) => {
+                const card = document.createElement('div');
+                card.className = 'news-card';
+                card.innerHTML = `
+                    <img class="news-bg" src="${news.image}" alt="News Image" onerror="this.src='https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=1000'">
+                    <div class="overlay"></div>
+                    
+                    <div class="news-details">
+                        <div class="badge-container">
+                            <span class="badge">${news.category}</span>
+                            <span class="news-time">${news.time}</span>
+                        </div>
+                        <div class="publisher">${news.publisher}</div>
+                        <div class="news-title">${news.title}</div>
+                    </div>
+
+                    <div class="action-bar">
+                        <button class="action-btn" onclick="toggleLike(this)">
+                            <i class="bi bi-heart-fill"></i>
+                            <span class="like-count">${news.likes}</span>
+                        </button>
+                        <button class="action-btn" onclick="window.open('${news.link}', '_blank')">
+                            <i class="bi bi-chat-dots-fill"></i>
+                            <span>خوێندنەوە</span>
+                        </button>
+                        <button class="action-btn" onclick="shareNews('${news.title}', '${news.link}')">
+                            <i class="bi bi-share-fill"></i>
+                            <span>شێر</span>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // فلتەرکردنی بەشەکان
+        function filterNews(category, tabElement) {
+            document.querySelectorAll('.nav-tabs li').forEach(tab => tab.classList.remove('active'));
+            tabElement.classList.add('active');
+
+            if (category === 'گشتی') {
+                renderNews(allNewsData);
             } else {
+                const filtered = allNewsData.filter(item => item.category === category);
+                renderNews(filtered);
+            }
+        }
+
+        // لایک کردن
+        function toggleLike(btn) {
+            btn.classList.toggle('liked');
+            let countSpan = btn.querySelector('.like-count');
+            let currentCount = parseInt(countSpan.innerText);
+            
+            if (btn.classList.contains('liked')) {
+                countSpan.innerText = currentCount + 1;
+            } else {
+                countSpan.innerText = currentCount - 1;
+            }
+        }
+
+        // شێرکردن
+        function shareNews(title, url) {
+            if (navigator.share) {
+                navigator.share({ title: title, url: url });
+            } else {
+                navigator.clipboard.writeText(url);
                 alert('لینکی هەواڵەکە کۆپی کرا!');
             }
         }
 
-        // فلتەرکردنی بەشەکان لە تابی سەرەوە
-        function filterCategory(category, tabElement) {
-            document.querySelectorAll('.nav-tabs li').forEach(tab => tab.classList.remove('active'));
-            tabElement.classList.add('active');
+        // دەستپێکردن و هێنانی داتا بە زوویی
+        fetchLiveNews();
 
-            let cards = document.querySelectorAll('.news-card');
-            cards.forEach(card => {
-                if (category === 'all' || card.dataset.category === category) {
-                    card.style.display = 'flex';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        }
-
-        // کۆنترۆڵکردنی پلەی بوونی ئۆتۆماتیکی ڤیدیۆ لەکاتی سکرۆڵدا
-        const container = document.getElementById('newsFeed');
-        const videos = document.querySelectorAll('video');
-
-        container.addEventListener('scroll', () => {
-            videos.forEach(video => {
-                const rect = video.getBoundingClientRect();
-                if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
-                    video.play();
-                } else {
-                    video.pause();
-                }
-            });
-        });
+        // نوێکردنەوەی هەواڵەکان ئۆتۆماتیکی (هەر ٣٠ چڕکە جارێک)
+        setInterval(fetchLiveNews, 30000);
     </script>
 </body>
 </html>
