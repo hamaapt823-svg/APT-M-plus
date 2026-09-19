@@ -11,7 +11,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; user-select: none; }
         body { background-color: #000; color: #fff; overflow: hidden; height: 100vh; width: 100vw; }
         
-        /* به شی سه‌ره‌وه */
+        /* بەشی سەرەوە */
         header { 
             position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
             background: linear-gradient(to bottom, rgba(0,0,0,0.95), transparent); 
@@ -65,15 +65,15 @@
     <script>
         let currentCategory = 'all';
 
-        // سەرچاوەکانی هەواڵ بە شێوەی دروست
-        const rssFeeds = {
-            all: 'https://api.rss2json.com/v1/api.json?rss_url=https://www.rudaw.net/sorani/rss',
-            local: 'https://api.rss2json.com/v1/api.json?rss_url=https://www.rudaw.net/sorani/kurdistan/rss',
-            sports: 'https://api.rss2json.com/v1/api.json?rss_url=https://www.rudaw.net/sorani/sports/rss',
-            economy: 'https://api.rss2json.com/v1/api.json?rss_url=https://www.rudaw.net/sorani/business/rss'
+        // لینکی RSSەکان
+        const rssUrls = {
+            all: 'https://www.rudaw.net/sorani/rss',
+            local: 'https://www.rudaw.net/sorani/kurdistan/rss',
+            sports: 'https://www.rudaw.net/sorani/sports/rss',
+            economy: 'https://www.rudaw.net/sorani/business/rss'
         };
 
-        // داتای ئۆتۆماتیکی (Backup) بۆ ئەگەر ئینتەرنێت یان RSS خاو بوو
+        // داتای ئۆتۆماتیکی (Backup) ئەگەر هێڵ زۆر خاو بوو
         const backupData = [
             {
                 title: 'کەشناسی هەرێم: نزمبوونەوەی پلەکانی گەرما و شەپۆلێکی بارانبارین بەڕێوەیە.',
@@ -99,33 +99,53 @@
         ];
 
         async function fetchLiveNews() {
-            const container = document.getElementById('newsFeed');
-            const targetUrl = rssFeeds[currentCategory] || rssFeeds.all;
+            const rssUrl = rssUrls[currentCategory] || rssUrls.all;
+            // بەکارهێنانی AllOrigins بۆ بڕینی کێشەی CORS بە بێ بلۆکبوون
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`;
 
             try {
-                // هێنانی داتا ڕاستەوخۆ
-                const response = await fetch(targetUrl);
+                const response = await fetch(proxyUrl);
                 const data = await response.json();
+                
+                if (data.contents) {
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(data.contents, "text/xml");
+                    const items = xmlDoc.querySelectorAll("item");
 
-                if (data.status === 'ok' && data.items && data.items.length > 0) {
-                    const formattedNews = data.items.map(item => {
-                        let img = item.thumbnail || (item.enclosure ? item.enclosure.link : null);
-                        if (!img) img = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800';
+                    let formattedNews = [];
+                    items.forEach((item, index) => {
+                        if(index < 10) { // ١٠ هەواڵی یەکەم
+                            const title = item.querySelector("title")?.textContent || "";
+                            const link = item.querySelector("link")?.textContent || "#";
+                            const pubDate = item.querySelector("pubDate")?.textContent || "";
+                            
+                            // وێنەکان لە XML
+                            let img = item.querySelector("enclosure")?.getAttribute("url") || 
+                                      item.querySelector("thumbnail")?.getAttribute("url");
+                            
+                            if (!img) {
+                                img = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800';
+                            }
 
-                        return {
-                            title: item.title,
-                            link: item.link,
-                            img: img,
-                            date: new Date(item.pubDate).toLocaleTimeString('ckb', { hour: '2-digit', minute: '2-digit' }),
-                            source: 'APT Live'
-                        };
+                            formattedNews.push({
+                                title: title,
+                                link: link,
+                                img: img,
+                                date: pubDate ? new Date(pubDate).toLocaleTimeString('ckb', { hour: '2-digit', minute: '2-digit' }) : 'تازە',
+                                source: 'APT Live'
+                            });
+                        }
                     });
-                    renderUI(formattedNews);
+
+                    if (formattedNews.length > 0) {
+                        renderUI(formattedNews);
+                    } else {
+                        renderUI(backupData);
+                    }
                 } else {
                     renderUI(backupData);
                 }
             } catch (error) {
-                // ئەگەر پەیوەندی پچڕا یان خاو بوو، هەواڵە زیندوەکانی پاشبنەما دەردەخات بەبێ ئەوەی شاشەکە بوەستێت
                 renderUI(backupData);
             }
         }
@@ -175,11 +195,11 @@
             btn.classList.toggle('liked');
         }
 
-        // دەستپێکردنی یەکەم بارکردن
+        // دەستپێکردن
         fetchLiveNews();
 
-        // نوێکردنەوەی بەردەوامی هەواڵەکان هەر ٢٠ چڕکە جارێک
-        setInterval(fetchLiveNews, 20000);
+        // نوێکردنەوەی ئۆتۆماتیکی
+        setInterval(fetchLiveNews, 30000);
     </script>
 </body>
 </html>
