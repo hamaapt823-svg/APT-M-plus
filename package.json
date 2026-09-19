@@ -1,11 +1,14 @@
-const express = require('express');
-const cors = require('cors');
-const newsHandler = require('./api/news');
-
-const app = express();
-app.use(cors());
-
-app.get('/api/news', newsHandler);
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`سێرڤەر کار دەکات لەسەر پۆرت: ${PORT}`));
+{
+  "name": "apt-m-plus",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "axios": "^1.6.0",
+    "rss-parser": "^3.13.0"
+  }
+}
