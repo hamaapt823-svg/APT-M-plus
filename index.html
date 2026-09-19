@@ -1,224 +1,61 @@
 <!DOCTYPE html>
-<html lang="ckb" dir="rtl">
+<html lang="ku" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>APT Media - هەواڵی ڕاستەوخۆ</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    }
-
-    body, html {
-      height: 100%;
-      background-color: #000;
-      color: #fff;
-      overflow: hidden;
-    }
-
-    /* پێکهاتەی هێنانی Vertical Scroll وەک TikTok */
-    .app-container {
-      height: 100vh;
-      overflow-y: scroll;
-      scroll-snap-type: y mandatory;
-      scrollbar-width: none; /* Firefox */
-    }
-
-    .app-container::-webkit-scrollbar {
-      display: none; /* Chrome, Safari, Opera */
-    }
-
-    .news-card {
-      height: 100vh;
-      width: 100%;
-      scroll-snap-align: start;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      background: #111;
-    }
-
-    /* ڤیدیۆی بپاشخان */
-    .video-background {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: 1;
-    }
-
-    /* سێبەری ژێر دەقەکان بۆ ئەوەی ڕوون دەربکەون */
-    .overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.85) 100%);
-      z-index: 2;
-    }
-
-    /* تەختەی زانیاری هەواڵ */
-    .content-box {
-      position: relative;
-      z-index: 3;
-      padding: 24px;
-      margin-bottom: 20px;
-    }
-
-    .badge {
-      display: inline-block;
-      background-color: #e50914;
-      color: white;
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-
-    .title {
-      font-size: 20px;
-      font-weight: 700;
-      line-height: 1.4;
-      margin-bottom: 8px;
-    }
-
-    .summary {
-      font-size: 14px;
-      color: #ddd;
-      line-height: 1.5;
-      margin-bottom: 12px;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .meta-info {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      color: #aaa;
-    }
-
-    /* شاشەی Loading */
-    .loading-screen {
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 18px;
-    }
-
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid rgba(255, 255, 255, 0.1);
-      border-left-color: #e50914;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 16px;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APT Media</title>
+    <style>
+        body { font-family: Tahoma, Arial, sans-serif; background-color: #000; color: #fff; text-align: center; padding: 20px; }
+        #news-container { max-width: 600px; margin: 0 auto; text-align: right; }
+        .news-item { background: #111; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #333; }
+        .news-item h3 { margin-top: 0; color: #e50914; }
+        .news-item p { color: #ccc; }
+        .news-item small { color: #666; font-size: 12px; }
+        .loading { color: #ff0000; font-weight: bold; }
+        .error { color: #ff4444; }
+    </style>
 </head>
 <body>
-
-  <div id="app" class="app-container">
-    <div class="loading-screen" id="loading">
-      <div class="spinner"></div>
-      <p>لە بارکردنی نوێترین هەواڵەکانی APT Media...</p>
+    <h1>APT Media</h1>
+    <div id="news-container">
+        <p class="loading" id="loading-text">لە بارکردنی نوێترین هەواڵەکانی APT Media...</p>
     </div>
-  </div>
 
-  <script>
-    const appContainer = document.getElementById('app');
-    const loadingScreen = document.getElementById('loading');
+    <script>
+        async function fetchNews() {
+            const container = document.getElementById('news-container');
+            
+            try {
+                // هێنانی داتاکان لە APIـیەکەی خۆتەوە
+                const response = await fetch('/api/news');
+                if (!response.ok) throw new Error('کێشە لە پەیوەندی هەیە');
+                
+                const result = await response.json();
+                const newsData = result.data;
 
-    // هێنانی هەواڵەکان لە API کە دروستمان کردووە
-    async function fetchNews() {
-      try {
-        const response = await fetch('/api/news');
-        const data = await response.json();
-
-        if (data.success && data.data.length > 0) {
-          loadingScreen.style.display = 'none';
-          renderNews(data.data);
-        } else {
-          showError('هیچ هەواڵێک بەردەست نییە لەم مەودایەدا.');
-        }
-      } catch (err) {
-        console.error(err);
-        showError('کێشەیەک لە پەیوەندیکردن بە سێرڤەرەوە هەیە.');
-      }
-    }
-
-    // ڕەندەرکردنی کاردەکان لەناو ڕووکارەکەدا
-    function renderNews(newsList) {
-      newsList.forEach((news) => {
-        const card = document.createElement('div');
-        card.className = 'news-card';
-
-        card.innerHTML = `
-          <video class="video-background" loop muted playsinline preload="metadata">
-            <source src="${news.videoUrl}" type="video/mp4">
-          </video>
-          <div class="overlay"></div>
-          <div class="content-box">
-            <span class="badge">LIVE</span>
-            <h2 class="title">${news.title}</h2>
-            <p class="summary">${news.summary}</p>
-            <div class="meta-info">
-              <span>سەرچاوە: ${news.source}</span>
-              <span>کات: ${news.time}</span>
-            </div>
-          </div>
-        `;
-
-        appContainer.appendChild(card);
-      });
-
-      setupVideoObserver();
-    }
-
-    // کۆنتڕۆڵکردنی ئۆتۆماتیکی لێدانی ڤیدیۆکان کاتێک بەکارھێنەر Scroll دەکات
-    function setupVideoObserver() {
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          const video = entry.target.querySelector('video');
-          if (video) {
-            if (entry.isIntersecting) {
-              video.play().catch(() => {});
-            } else {
-              video.pause();
+                // پیشاندانی هەواڵەکان ئەگەر بوونیان هەبوو
+                if (newsData && newsData.length > 0) {
+                    container.innerHTML = ''; 
+                    newsData.forEach(news => {
+                        const newsDiv = document.createElement('div');
+                        newsDiv.className = 'news-item';
+                        newsDiv.innerHTML = `
+                            <h3>${news.title}</h3>
+                            <p>${news.content}</p>
+                            <small>${news.date}</small>
+                        `;
+                        container.appendChild(newsDiv);
+                    });
+                } else {
+                    container.innerHTML = '<p class="error">هیچ هەواڵێک بەردەست نییە لەم مەودایەدا.</p>';
+                }
+            } catch (error) {
+                console.error('Error fetching news:', error);
+                container.innerHTML = '<p class="error">کێشەیەک هەیە لە هێنانی هەواڵەکان، تکایە ئینتەرنێتەکەت بپشکنە.</p>';
             }
-          }
-        });
-      }, { threshold: 0.6 });
+        }
 
-      document.querySelectorAll('.news-card').forEach(card => {
-        observer.observe(card);
-      });
-    }
-
-    function showError(message) {
-      loadingScreen.innerHTML = `<p style="color: #ff4d4d;">${message}</p>`;
-    }
-
-    // دەستپێکردن لە کاتی باربوونی پەڕەکە
-    window.addEventListener('DOMContentLoaded', fetchNews);
-  </script>
+        window.onload = fetchNews;
+    </script>
 </body>
 </html>
