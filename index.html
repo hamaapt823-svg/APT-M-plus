@@ -39,6 +39,8 @@
         .action-btn { background: none; border: none; color: #fff; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 26px; }
         .action-btn span { font-size: 12px; color: #ddd; }
         .action-btn.liked i { color: #ff3b30; }
+
+        .loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #ff3b30; font-size: 16px; text-align: center; }
     </style>
 </head>
 <body>
@@ -46,53 +48,56 @@
     <header>
         <div class="logo">APT Media</div>
         <ul class="nav-tabs">
-            <li class="active" onclick="filterCategory('گشتی', this)">گشتی</li>
-            <li onclick="filterCategory('ناوخۆیی', this)">ناوخۆیی</li>
-            <li onclick="filterCategory('وەرزشی', this)">وەرزشی</li>
-            <li onclick="filterCategory('ئابووری', this)">ئابووری</li>
+            <li class="active" onclick="filterCategory('all', this)">گشتی</li>
+            <li onclick="filterCategory('local', this)">ناوخۆیی</li>
+            <li onclick="filterCategory('sports', this)">وەرزشی</li>
+            <li onclick="filterCategory('economy', this)">ئابووری</li>
         </ul>
     </header>
 
-    <div class="app-container" id="newsFeed"></div>
+    <div class="app-container" id="newsFeed">
+        <div class="loader" id="loader">لە بارکردنی هەواڵەکاندا...</div>
+    </div>
 
     <script>
-        let newsData = [
-            { id: 1, title: 'کەشناسی هەرێم: شەپۆلێکی بارانبارین و بەفر زۆربەی ناوچەکان دەگرێتەوە.', category: 'ناوخۆیی', time: 'تازە', publisher: 'APT Media', image: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=800', likes: 142 },
-            { id: 2, title: 'یارییەکانی قۆناغی داهاتووی خولی پاڵەوانەکان بەڕێوەدەچێت.', category: 'وەرزشی', time: 'پێش ٥ خولەک', publisher: 'APT Sport', image: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800', likes: 310 },
-            { id: 3, title: 'بەرزبوونەوەی نرخەکانی زێڕ و نەوت لە بازاڕە جیهانییەکاندا.', category: 'ئابووری', time: 'پێش ١٠ خولەک', publisher: 'APT Economy', image: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800', likes: 98 },
-            { id: 4, title: 'کۆبوونەوەی لوپوتکەی جیهانی لەبارەی ژینگە دەستی پێکرد.', category: 'گشتی', time: 'پێش ١٥ خولەک', publisher: 'APT Global', image: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800', likes: 215 }
-        ];
+        let currentCategory = 'all';
 
-        let currentCat = 'گشتی';
+        async function fetchNews() {
+            try {
+                const response = await fetch(`/api/news?cat=${currentCategory}`);
+                const newsList = await response.json();
+                renderUI(newsList);
+            } catch (error) {
+                console.error("Fetch error:", error);
+            }
+        }
 
-        function renderFeed() {
+        function renderUI(newsList) {
             const container = document.getElementById('newsFeed');
             container.innerHTML = '';
 
-            let list = currentCat === 'گشتی' ? newsData : newsData.filter(item => item.category === currentCat);
-
-            list.forEach(news => {
+            newsList.forEach(news => {
                 const card = document.createElement('div');
                 card.className = 'news-card';
                 card.innerHTML = `
-                    <img class="news-bg" src="${news.image}">
+                    <img class="news-bg" src="${news.img}" onerror="this.src='https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800'">
                     <div class="overlay"></div>
                     <div class="news-details">
                         <div>
-                            <span class="badge">${news.category}</span>
-                            <span class="news-time">${news.time}</span>
+                            <span class="badge">${currentCategory.toUpperCase()}</span>
+                            <span class="news-time">${news.date}</span>
                         </div>
-                        <div class="publisher">${news.publisher}</div>
+                        <div class="publisher">${news.source}</div>
                         <div class="news-title">${news.title}</div>
                     </div>
                     <div class="action-bar">
                         <button class="action-btn" onclick="toggleLike(this)">
                             <i class="bi bi-heart-fill"></i>
-                            <span class="like-count">${news.likes}</span>
+                            <span>152</span>
                         </button>
-                        <button class="action-btn" onclick="alert('لینکەکە کۆپی کرا')">
-                            <i class="bi bi-share-fill"></i>
-                            <span>شێر</span>
+                        <button class="action-btn" onclick="window.open('${news.link}', '_blank')">
+                            <i class="bi bi-box-arrow-up-right"></i>
+                            <span>خوێندنەوە</span>
                         </button>
                     </div>
                 `;
@@ -100,22 +105,20 @@
             });
         }
 
-        function filterCategory(cat, el) {
-            document.querySelectorAll('.nav-tabs li').forEach(tab => tab.classList.remove('active'));
-            el.classList.add('active');
-            currentCat = cat;
-            renderFeed();
+        function filterCategory(cat, element) {
+            document.querySelectorAll('.nav-tabs li').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            currentCategory = cat;
+            document.getElementById('newsFeed').innerHTML = '<div class="loader">لە بارکردنی هەواڵەکاندا...</div>';
+            fetchNews();
         }
 
         function toggleLike(btn) {
             btn.classList.toggle('liked');
-            let count = btn.querySelector('.like-count');
-            let val = parseInt(count.innerText);
-            count.innerText = btn.classList.contains('liked') ? val + 1 : val - 1;
         }
 
-        // یەکەم جار نیشاندانی هەواڵەکان ڕاستەوخۆ
-        renderFeed();
+        fetchNews();
+        setInterval(fetchNews, 30000);
     </script>
 </body>
 </html>
