@@ -1,391 +1,355 @@
-import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
-import 'package:share_plus/share_plus.dart';
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APT Media - هەواڵەکان</title>
+    <!-- FontAwesome بۆ ئایکۆنەکان -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
 
-void main() {
-  runApp(const APTMediaApp());
-}
+        body {
+            background-color: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
 
-class APTMediaApp extends StatelessWidget {
-  const APTMediaApp({super.key});
+        /* بەشی سەرەوە - Navigation Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            padding: 15px 0 10px;
+            text-align: center;
+        }
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'APT Media',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: Colors.black,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-        ),
-      ),
-      home: const HomeScreen(),
-    );
-  }
-}
+        .logo {
+            color: #ff3b30;
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
 
-// مۆدێلی زانیاری هەواڵەکان
-class NewsItem {
-  final String id;
-  final String title;
-  final String category; // گشتی، ناوخۆیی، وەرزشی، ئابووری
-  final String mediaUrl; // لینک یان فایلی ڤیدیۆ/وێنە
-  final String publisher;
-  final String time;
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            list-style: none;
+            overflow-x: auto;
+            padding: 0 10px;
+        }
 
-  NewsItem({
-    required this.id,
-    required this.title,
-    required this.category,
-    required this.mediaUrl,
-    required this.publisher,
-    required this.time,
-  });
-}
+        .nav-tabs li {
+            font-size: 15px;
+            color: #ccc;
+            cursor: pointer;
+            padding-bottom: 5px;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+        .nav-tabs li.active {
+            color: #fff;
+            font-weight: bold;
+            border-bottom: 3px solid #ff3b30;
+        }
 
-  // داتای نموونەیی هەواڵەکان (دواتر دەتوانی لە API بیهێنیت)
-  static final List<NewsItem> allNews = [
-    NewsItem(
-      id: '1',
-      title: 'بەرشەلۆنە سەرکەوتنێکی گەورەی لە خولی یانە پاڵەوانەکان بەدەستهێنا.',
-      category: 'وەرزشی',
-      mediaUrl: 'https://assets.mixkit.co/videos/preview/mixkit-news-anchor-reporting-live-42838-large.mp4',
-      publisher: 'APT Sport',
-      time: 'بەربل ٥ خولەک',
-    ),
-    NewsItem(
-      id: '2',
-      title: 'نرخی دۆلار لە بازاڕەکانی هەرێمی کوردستان گۆڕانکاری بەسەردا هات.',
-      category: 'ئابووری',
-      mediaUrl: 'https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-with-financial-data-41318-large.mp4',
-      publisher: 'APT Economy',
-      time: 'بەربل ١٥ خولەک',
-    ),
-    NewsItem(
-      id: '3',
-      title: 'حکومەتی هەرێمی کوردستان بڕیارێکی نوێی لەبارەی پڕۆژەکانی ڕێگەوبان دەرکرد.',
-      category: 'ناوخۆیی',
-      mediaUrl: 'https://assets.mixkit.co/videos/preview/mixkit-hands-holding-a-smartphone-with-a-green-screen-41527-large.mp4',
-      publisher: 'APT Local',
-      time: 'بەربل ٣٠ خولەک',
-    ),
-    NewsItem(
-      id: '4',
-      title: 'لوپوتکەی جیهانی ئابووری لە نیویۆرک دەستی پێکرد.',
-      category: 'گشتی',
-      mediaUrl: 'https://assets.mixkit.co/videos/preview/mixkit-world-map-animation-with-connections-41316-large.mp4',
-      publisher: 'APT World',
-      time: 'بەربل ١ کاتژمێر',
-    ),
-  ];
+        /* کانتێنەری سەرەکی سکرۆڵکردنی تیک تۆکی (Snap Scroll) */
+        .app-container {
+            height: 100vh;
+            width: 100vw;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
 
-  @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 4,
-      child: Scaffold(
-        extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          centerTitle: true,
-          title: const Text(
-            'APT Media',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.redAccent,
-              letterSpacing: 1.2,
-            ),
-          ),
-          bottom: const TabBar(
-            isScrollable: true,
-            indicatorColor: Colors.redAccent,
-            indicatorWeight: 3,
-            labelStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            unselectedLabelStyle: TextStyle(fontSize: 14),
-            tabs: [
-              Tab(text: 'گشتی'),
-              Tab(text: 'ناوخۆیی'),
-              Tab(text: 'وەرزشی'),
-              Tab(text: 'ئابووری'),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: [
-            NewsFeed(newsList: allNews),
-            NewsFeed(newsList: allNews.where((n) => n.category == 'ناوخۆیی').toList()),
-            NewsFeed(newsList: allNews.where((n) => n.category == 'وەرزشی').toList()),
-            NewsFeed(newsList: allNews.where((n) => n.category == 'ئابووری').toList()),
-          ],
-        ),
-      ),
-    );
-  }
-}
+        /* هەر هەواڵێک - Full Screen Card */
+        .news-card {
+            height: 100vh;
+            width: 100vw;
+            scroll-snap-align: start;
+            position: relative;
+            background-color: #111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-// بەشی فیدی هەواڵەکان (سکرۆڵی تیک تۆکی)
-class NewsFeed extends StatelessWidget {
-  final List<NewsItem> newsList;
+        .news-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
 
-  const NewsFeed({super.key, required this.newsList});
+        /* سێبەری سەر ڤیدیۆکە بۆ ئاسان خوێندنەوەی دەقەکان */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,0.85) 20%, transparent 60%, rgba(0,0,0,0.5) 100%);
+            pointer-events: none;
+        }
 
-  @override
-  Widget build(BuildContext context) {
-    if (newsList.isEmpty) {
-      return const Center(
-        child: Text(
-          'هیچ هەواڵێک لەم بەشەدا نییە',
-          style: TextStyle(color: Colors.white70, fontSize: 16),
-        ),
-      );
-    }
+        /* زانیارییەکانی هەواڵ - لای چەپ و خوارەوە */
+        .news-details {
+            position: absolute;
+            bottom: 30px;
+            right: 80px;
+            left: 20px;
+            z-index: 10;
+        }
 
-    return PageView.builder(
-      scrollDirection: Axis.vertical,
-      itemCount: newsList.length,
-      itemBuilder: (context, index) {
-        return NewsCard(news: newsList[index]);
-      },
-    );
-  }
-}
+        .badge {
+            background-color: #ff3b30;
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
 
-// کارت و پلەیەر بۆ هەربەشێکی هەواڵ
-class NewsCard extends StatefulWidget {
-  final NewsItem news;
+        .news-time {
+            font-size: 12px;
+            color: #aaa;
+            margin-right: 8px;
+        }
 
-  const NewsCard({super.key, required this.news});
+        .publisher {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #fff;
+        }
 
-  @override
-  State<NewsCard> createState() => _NewsCardState();
-}
+        .news-title {
+            font-size: 18px;
+            line-height: 1.4;
+            color: #eee;
+            font-weight: 500;
+        }
 
-class _NewsCardState extends State<NewsCard> {
-  late VideoPlayerController _controller;
-  bool _isLiked = false;
-  int _likeCount = 124;
+        /* دوگمەکانی لایک و کۆمێنت - لای ڕاست */
+        .action-bar {
+            position: absolute;
+            bottom: 40px;
+            right: 15px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.news.mediaUrl))
-      ..initialize().then((_) {
-        setState(() {});
-        _controller.setLooping(true);
-        _controller.play();
-      });
-  }
+        .action-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            font-size: 24px;
+            transition: transform 0.2s;
+        }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+        .action-btn:active {
+            transform: scale(1.2);
+        }
 
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // ١. ڤیدیۆ یان باکگراوەند
-        Positioned.fill(
-          child: _controller.value.isInitialized
-              ? GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _controller.value.isPlaying
-                          ? _controller.pause()
-                          : _controller.play();
-                    });
-                  },
-                  child: AspectRatio(
-                    aspectRatio: _controller.value.aspectRatio,
-                    child: VideoPlayer(_controller),
-                  ),
-                )
-              : const Center(
-                  child: CircularProgressIndicator(color: Colors.redAccent),
-                ),
-        ),
+        .action-btn span {
+            font-size: 12px;
+            color: #ddd;
+        }
 
-        // ٢. خستنەسەری ڕەنگی تۆخ (Overlay) بۆ باشتر خوێندنەوەی دەقەکان
-        Positioned.fill(
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.black.withOpacity(0.8),
-                  Colors.transparent,
-                  Colors.black.withOpacity(0.9),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                stops: const [0.0, 0.5, 1.0],
-              ),
-            ),
-          ),
-        ),
+        .action-btn.liked i {
+            color: #ff3b30;
+        }
+    </style>
+</head>
+<body>
 
-        // ٣. زانیاریەکانی هەواڵ لە خوارەوە (Title & Details)
-        Positioned(
-          bottom: 40,
-          left: 16,
-          right: 80,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.redAccent,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      widget.news.category,
-                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    widget.news.time,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                widget.news.publisher,
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                widget.news.title,
-                style: const TextStyle(color: Colors.white, fontSize: 18, height: 1.3),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
+    <!-- بەشی تابی سەرەوە -->
+    <header>
+        <div class="logo">APT Media</div>
+        <ul class="nav-tabs">
+            <li class="active" onclick="filterCategory('all', this)">گشتی</li>
+            <li onclick="filterCategory('local', this)">ناوخۆیی</li>
+            <li onclick="filterCategory('sports', this)">وەرزشی</li>
+            <li onclick="filterCategory('economy', this)">ئابووری</li>
+        </ul>
+    </header>
 
-        // ٤. دوگمەکانی دەستڕاگەیشتنی خێرا (لایک، کۆمێنت، شێر) لەلای ڕاست
-        Positioned(
-          bottom: 40,
-          right: 16,
-          child: Column(
-            children: [
-              _buildActionButton(
-                icon: _isLiked ? Icons.favorite : Icons.favorite_border,
-                color: _isLiked ? Colors.red : Colors.white,
-                label: '$_likeCount',
-                onTap: () {
-                  setState(() {
-                    _isLiked = !_isLiked;
-                    _isLiked ? _likeCount++ : _likeCount--;
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
-              _buildActionButton(
-                icon: Icons.comment_rounded,
-                color: Colors.white,
-                label: '٤٥',
-                onTap: () {
-                  _showCommentsBottomSheet(context);
-                },
-              ),
-              const SizedBox(height: 20),
-              _buildActionButton(
-                icon: Icons.share_rounded,
-                color: Colors.white,
-                label: 'شێر',
-                onTap: () {
-                  Share.share('${widget.news.title}\nلە APT Media بیخوێنەرەوە!');
-                },
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+    <!-- کانتێنەری سەرەکی هەواڵەکان -->
+    <div class="app-container" id="newsFeed">
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required Color color,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 35),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(color: Colors.white, fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
+        <!-- هەواڵی ١: وەرزشی -->
+        <div class="news-card" data-category="sports">
+            <video class="news-video" loop autoplay muted playsinline src="https://assets.mixkit.co/videos/preview/mixkit-news-anchor-reporting-live-42838-large.mp4"></video>
+            <div class="overlay"></div>
+            
+            <div class="news-details">
+                <div>
+                    <span class="badge">وەرزشی</span>
+                    <span class="news-time">پێش ٥ خولەک</span>
+                </div>
+                <div class="publisher">APT Sport</div>
+                <div class="news-title">یانەی بەرشەلۆنە سەرکەوتنێکی گەورەی لە خولی یانە پاڵەوانەکان بەدەستهێنا.</div>
+            </div>
 
-  // دیالۆگی کۆمێنتەکان (Comments)
-  void _showCommentsBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.grey[900],
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          height: 400,
-          child: Column(
-            children: [
-              const Text(
-                'کۆمێنتەکان',
-                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const Divider(color: Colors.white24),
-              const Expanded(
-                child: Center(
-                  child: Text(
-                    'هیچ کۆمێنتێک نییە، یەکەم کەسبە کۆمێنت دەکات!',
-                    style: TextStyle(color: Colors.white54),
-                  ),
-                ),
-              ),
-              TextField(
-                decoration: InputDecoration(
-                  hintText: 'کۆمێنتێک بنووسە...',
-                  hintStyle: const TextStyle(color: Colors.white38),
-                  filled: true,
-                  fillColor: Colors.black26,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide.none,
-                  ),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.send, color: Colors.redAccent),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
+            <div class="action-bar">
+                <button class="action-btn" onclick="toggleLike(this)">
+                    <i class="fa-solid fa-heart"></i>
+                    <span class="like-count">1.2k</span>
+                </button>
+                <button class="action-btn" onclick="alert('بەشی کۆمێنتەکان')">
+                    <i class="fa-solid fa-comment-dots"></i>
+                    <span>245</span>
+                </button>
+                <button class="action-btn" onclick="shareNews()">
+                    <i class="fa-solid fa-share"></i>
+                    <span>شێر</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- هەواڵی ٢: ئابووری -->
+        <div class="news-card" data-category="economy">
+            <video class="news-video" loop muted playsinline src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-screens-with-financial-data-41318-large.mp4"></video>
+            <div class="overlay"></div>
+
+            <div class="news-details">
+                <div>
+                    <span class="badge">ئابووری</span>
+                    <span class="news-time">پێش ١٥ خولەک</span>
+                </div>
+                <div class="publisher">APT Economy</div>
+                <div class="news-title">نرخی دۆلار لە بازاڕەکانی هەرێمی کوردستان و عێراق گۆڕانکاری بەسەردا هات.</div>
+            </div>
+
+            <div class="action-bar">
+                <button class="action-btn" onclick="toggleLike(this)">
+                    <i class="fa-solid fa-heart"></i>
+                    <span class="like-count">850</span>
+                </button>
+                <button class="action-btn" onclick="alert('بەشی کۆمێنتەکان')">
+                    <i class="fa-solid fa-comment-dots"></i>
+                    <span>98</span>
+                </button>
+                <button class="action-btn" onclick="shareNews()">
+                    <i class="fa-solid fa-share"></i>
+                    <span>شێر</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- هەواڵی ٣: ناوخۆیی -->
+        <div class="news-card" data-category="local">
+            <video class="news-video" loop muted playsinline src="https://assets.mixkit.co/videos/preview/mixkit-hands-holding-a-smartphone-with-a-green-screen-41527-large.mp4"></video>
+            <div class="overlay"></div>
+
+            <div class="news-details">
+                <div>
+                    <span class="badge">ناوخۆیی</span>
+                    <span class="news-time">پێش ٣٠ خولەک</span>
+                </div>
+                <div class="publisher">APT Local</div>
+                <div class="news-title">حکومەتی هەرێمی کوردستان بڕیارێکی نوێی لەبارەی پڕۆژەکانی ڕێگەوبان دەرکرد.</div>
+            </div>
+
+            <div class="action-bar">
+                <button class="action-btn" onclick="toggleLike(this)">
+                    <i class="fa-solid fa-heart"></i>
+                    <span class="like-count">3.4k</span>
+                </button>
+                <button class="action-btn" onclick="alert('بەشی کۆمێنتەکان')">
+                    <i class="fa-solid fa-comment-dots"></i>
+                    <span>512</span>
+                </button>
+                <button class="action-btn" onclick="shareNews()">
+                    <i class="fa-solid fa-share"></i>
+                    <span>شێر</span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- فەنکشنەکانی JavaScript -->
+    <script>
+        // لایک کردنی هەواڵ
+        function toggleLike(btn) {
+            btn.classList.toggle('liked');
+            let countSpan = btn.querySelector('.like-count');
+            let currentCount = parseFloat(countSpan.innerText);
+            
+            if (btn.classList.contains('liked')) {
+                countSpan.innerText = (currentCount + 0.1).toFixed(1) + 'k';
+            } else {
+                countSpan.innerText = (currentCount - 0.1).toFixed(1) + 'k';
+            }
+        }
+
+        // شێرکردنی هەواڵ
+        function shareNews() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'APT Media',
+                    text: 'ئەم هەواڵە لە APT Media ببینە!',
+                    url: window.location.href,
+                });
+            } else {
+                alert('لینکی هەواڵەکە کۆپی کرا!');
+            }
+        }
+
+        // فلتەرکردنی بەشەکان لە تابی سەرەوە
+        function filterCategory(category, tabElement) {
+            document.querySelectorAll('.nav-tabs li').forEach(tab => tab.classList.remove('active'));
+            tabElement.classList.add('active');
+
+            let cards = document.querySelectorAll('.news-card');
+            cards.forEach(card => {
+                if (category === 'all' || card.dataset.category === category) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // کۆنترۆڵکردنی پلەی بوونی ئۆتۆماتیکی ڤیدیۆ لەکاتی سکرۆڵدا
+        const container = document.getElementById('newsFeed');
+        const videos = document.querySelectorAll('video');
+
+        container.addEventListener('scroll', () => {
+            videos.forEach(video => {
+                const rect = video.getBoundingClientRect();
+                if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
+                    video.play();
+                } else {
+                    video.pause();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
