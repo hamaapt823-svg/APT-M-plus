@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>APT Media</title>
+    <!-- ئایکۆنەکانی Bootstrap -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; user-select: none; }
         body { background-color: #000; color: #fff; overflow: hidden; height: 100vh; width: 100vw; }
         
+        /* بەشی سەرەوە */
         header { 
             position: fixed; top: 0; left: 0; right: 0; z-index: 100; 
             background: linear-gradient(to bottom, rgba(0,0,0,0.95), transparent); 
@@ -20,7 +22,8 @@
         .nav-tabs li { font-size: 15px; color: #aaa; cursor: pointer; padding-bottom: 5px; white-space: nowrap; }
         .nav-tabs li.active { color: #fff; font-weight: bold; border-bottom: 3px solid #ff3b30; }
 
-        .app-container { height: 100vh; width: 100vw; overflow-y: scroll; scroll-snap-type: y mandatory; }
+        /* کانتێنەری سکرۆڵکردنی تیک تۆکی */
+        .app-container { height: 100vh; width: 100vw; overflow-y: scroll; scroll-snap-type: y mandatory; scroll-behavior: smooth; }
         
         .news-card { 
             height: 100vh; width: 100vw; scroll-snap-align: start; 
@@ -40,14 +43,7 @@
         .action-btn span { font-size: 12px; color: #ddd; }
         .action-btn.liked i { color: #ff3b30; }
 
-        .live-indicator {
-            position: absolute; top: 75px; left: 15px; z-index: 100;
-            background: rgba(255, 59, 48, 0.2); border: 1px solid #ff3b30;
-            color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 11px;
-            display: flex; align-items: center; gap: 6px;
-        }
-        .dot { width: 8px; height: 8px; background-color: #ff3b30; border-radius: 50%; animation: blink 1s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #ff3b30; font-size: 18px; text-align: center; }
     </style>
 </head>
 <body>
@@ -55,115 +51,85 @@
     <header>
         <div class="logo">APT Media</div>
         <ul class="nav-tabs">
-            <li class="active" onclick="filterNews('گشتی', this)">گشتی</li>
-            <li onclick="filterNews('ناوخۆیی', this)">ناوخۆیی</li>
-            <li onclick="filterNews('وەرزشی', this)">وەرزشی</li>
-            <li onclick="filterNews('ئابووری', this)">ئابووری</li>
+            <li class="active" onclick="filterCategory('all', this)">گشتی</li>
+            <li onclick="filterCategory('local', this)">ناوخۆیی</li>
+            <li onclick="filterCategory('sports', this)">وەرزشی</li>
+            <li onclick="filterCategory('economy', this)">ئابووری</li>
         </ul>
     </header>
 
-    <div class="live-indicator">
-        <div class="dot"></div> ڕاستەوخۆ (چرکە بە چرکە)
+    <div class="app-container" id="newsFeed">
+        <div class="loader" id="loader"><i class="bi bi-arrow-repeat spin"></i> لە بارکردنی هەواڵە نوێیەکاندا...</div>
     </div>
 
-    <div class="app-container" id="newsFeed"></div>
-
     <script>
-        // داتای سەرەتایی هەواڵەکان
-        let newsDatabase = [
-            { id: 1, title: 'کەشناسی هەرێم: شەپۆلێکی سەرما و بارانبارین زۆربەی ناوچەکان دەگرێتەوە.', category: 'ناوخۆیی', time: 'تازە', publisher: 'APT Local', image: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=800', likes: 120 },
-            { id: 2, title: 'یارییەکانی قۆناغی داهاتووی خولی پاڵەوانەکان دیاری کران.', category: 'وەرزشی', time: 'پێش ٢ خولەک', publisher: 'APT Sport', image: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800', likes: 450 },
-            { id: 3, title: 'بەرزبوونەوەی نوێ لە نرخەکانی نەوت و زێڕ لە بازاڕە جیهانییەکان.', category: 'ئابووری', time: 'پێش ٥ خولەک', publisher: 'APT Economy', image: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800', likes: 210 },
-            { id: 4, title: 'کۆبوونەوەی لوپوتکەی جیهانی ئابووری دەستی پێکرد.', category: 'گشتی', time: 'پێش ١٠ خولەک', publisher: 'APT Global', image: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800', likes: 89 }
-        ];
+        let currentCategory = 'all';
 
-        let currentCategory = 'گشتی';
+        // هێنانی هەواڵەکان لە APIەکەی Vercel کە خۆت دروستت کردووە
+        async function loadNews() {
+            try {
+                // بەستنەوە بە فایلی api/news.js
+                const response = await fetch(`/api/news?cat=${currentCategory}`);
+                const newsList = await response.json();
 
-        function renderNews() {
-            const container = document.getElementById('newsFeed');
-            container.innerHTML = '';
+                const container = document.getElementById('newsFeed');
+                container.innerHTML = '';
 
-            let filtered = currentCategory === 'گشتی' 
-                ? newsDatabase 
-                : newsDatabase.filter(item => item.category === currentCategory);
+                if (!newsList || newsList.length === 0 || newsList.error) {
+                    container.innerHTML = '<div class="loader">هیچ هەواڵێک بەردەست نییە</div>';
+                    return;
+                }
 
-            filtered.forEach(news => {
-                const card = document.createElement('div');
-                card.className = 'news-card';
-                card.innerHTML = `
-                    <img class="news-bg" src="${news.image}" alt="news">
-                    <div class="overlay"></div>
-                    <div class="news-details">
-                        <div>
-                            <span class="badge">${news.category}</span>
-                            <span class="news-time">${news.time}</span>
+                newsList.forEach(news => {
+                    const card = document.createElement('div');
+                    card.className = 'news-card';
+                    card.innerHTML = `
+                        <img class="news-bg" src="${news.img}" onerror="this.src='https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800'">
+                        <div class="overlay"></div>
+                        <div class="news-details">
+                            <div>
+                                <span class="badge">${currentCategory.toUpperCase()}</span>
+                                <span class="news-time">${news.date}</span>
+                            </div>
+                            <div class="publisher">${news.source}</div>
+                            <div class="news-title">${news.title}</div>
                         </div>
-                        <div class="publisher">${news.publisher}</div>
-                        <div class="news-title">${news.title}</div>
-                    </div>
-                    <div class="action-bar">
-                        <button class="action-btn" onclick="toggleLike(this)">
-                            <i class="bi bi-heart-fill"></i>
-                            <span class="like-count">${news.likes}</span>
-                        </button>
-                        <button class="action-btn" onclick="alert('لینکەکە کۆپی کرا')">
-                            <i class="bi bi-share-fill"></i>
-                            <span>شێر</span>
-                        </button>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
+                        <div class="action-bar">
+                            <button class="action-btn" onclick="toggleLike(this)">
+                                <i class="bi bi-heart-fill"></i>
+                                <span>120</span>
+                            </button>
+                            <button class="action-btn" onclick="window.open('${news.link}', '_blank')">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                                <span>خوێندنەوە</span>
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+            } catch (err) {
+                document.getElementById('newsFeed').innerHTML = '<div class="loader">کێشەیەک ڕوویدا لە بارکردنی هەواڵەکاندا</div>';
+            }
         }
 
-        function filterNews(cat, el) {
-            document.querySelectorAll('.nav-tabs li').forEach(t => t.classList.remove('active'));
-            el.classList.add('active');
+        function filterCategory(cat, element) {
+            document.querySelectorAll('.nav-tabs li').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
             currentCategory = cat;
-            renderNews();
+            document.getElementById('newsFeed').innerHTML = '<div class="loader">لە بارکردنی هەواڵەکاندا...</div>';
+            loadNews();
         }
 
         function toggleLike(btn) {
             btn.classList.toggle('liked');
-            let countSpan = btn.querySelector('.like-count');
-            let val = parseInt(countSpan.innerText);
-            countSpan.innerText = btn.classList.contains('liked') ? val + 1 : val - 1;
         }
 
-        // 🤖 ژیری دەستکرد / ڕەشنووسی زیند و (چرکە بە چرکە هەواڵی نوێ دروست دەکات و زیادی دەکات)
-        const categories = ['ناوخۆیی', 'وەرزشی', 'ئابووری', 'گشتی'];
-        const sampleTitles = [
-            'بڕیارێکی نوێ لەبارەی ئاسانکاری بۆ مامەڵەی هاووڵاتییان دەرچوو.',
-            'تیمەکانی فریاگوزاری لە حاڵەتی ئامادەباشیی تەواودان.',
-            'یاریزانێکی دیار گرێبەستێکی نوێی ئیمزا کرد.',
-            'بازاڕی دراوە دیجیتاڵییەکان گۆڕانکاریی گەورەی بەخۆیەوە بینی.',
-            'پڕۆژەیەکی نوێی خزمەتگوزاری لە هەرێمی کوردستان ڕاگەیەندرا.'
-        ];
+        // یەکەم جار هێنانی هەواڵەکان
+        loadNews();
 
-        function autoGenerateLiveNews() {
-            const randomCat = categories[Math.floor(Math.random() * categories.length)];
-            const randomTitle = sampleTitles[Math.floor(Math.random() * sampleTitles.length)];
-            
-            const newArticle = {
-                id: Date.now(),
-                title: randomTitle,
-                category: randomCat,
-                time: 'ئێستا (نوێ)',
-                publisher: 'APT Live AI',
-                image: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800',
-                likes: Math.floor(Math.random() * 50) + 1
-            };
-
-            // خستنەسەری بۆ سەرەوەی لیستی هەواڵەکان
-            newsDatabase.unshift(newArticle);
-            renderNews();
-        }
-
-        // یەکەم جار ڕەندەر کردنی داتا
-        renderNews();
-
-        // هەر ١٠ چڕکە جارێک هەواڵێکی نوێی زێنەو دەچێتە ناو ئەپەکەتەوە بەبێ ریفرێش
-        setInterval(autoGenerateLiveNews, 10000);
+        // ڕیفرێش بوونەوەی ئۆتۆماتیکی لە پاشبنەمادا (هەر ٣٠ چڕکە جارێک)
+        setInterval(loadNews, 30000);
     </script>
 </body>
 </html>
