@@ -9,18 +9,16 @@ const sources = [
   { category: 'گشتی', url: 'https://www.rudaw.net/sorani/rss' },
 ];
 
-// کاش بۆ ئەوەی هەر جار هەواڵ نەهێنین
 let cache = {
   data: [],
   lastFetch: 0,
 };
 
-const CACHE_DURATION = 5 * 60 * 1000; // ٥ خولەک
+const CACHE_DURATION = 5 * 60 * 1000;
 
 async function fetchNews() {
   const now = Date.now();
 
-  // ئەگەر کاشەکە نوێیە، هەمان داتا بگەڕێنەوە
   if (cache.data.length > 0 && now - cache.lastFetch < CACHE_DURATION) {
     return cache.data;
   }
@@ -54,7 +52,6 @@ async function fetchNews() {
     }
   }
 
-  // ڕیزکردن بەپێی کات (نوێترین سەرەتا)
   allNews.sort((a, b) => new Date(b.time) - new Date(a.time));
 
   cache.data = allNews;
@@ -64,7 +61,6 @@ async function fetchNews() {
 }
 
 module.exports = async (req, res) => {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
