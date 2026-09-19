@@ -5,20 +5,87 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>APT Media</title>
     <style>
-        body { font-family: Tahoma, Arial, sans-serif; background-color: #000; color: #fff; text-align: center; padding: 20px; }
-        #news-container { max-width: 600px; margin: 0 auto; text-align: right; }
-        .news-item { background: #111; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #333; }
-        .news-item h3 { margin-top: 0; color: #e50914; }
-        .news-item p { color: #ccc; }
-        .news-item small { color: #666; font-size: 12px; }
-        .loading { color: #ff0000; font-weight: bold; }
-        .error { color: #ff4444; }
+        body {
+            background-color: #050505;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #ffffff;
+            margin-top: 30px;
+            margin-bottom: 30px;
+            font-size: 28px;
+            letter-spacing: 1px;
+        }
+        #news-container {
+            width: 100%;
+            max-width: 500px;
+        }
+        .news-item {
+            background-color: #1a1a1a;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        .news-item h3 {
+            margin: 0 0 10px 0;
+            color: #e50914; /* ڕەنگی سوور بۆ ناونیشان */
+            font-size: 18px;
+        }
+        .news-item p {
+            margin: 0 0 15px 0;
+            color: #d1d1d1;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        .news-item small {
+            color: #888;
+            font-size: 12px;
+        }
+        .error-box {
+            background-color: #2a0808;
+            border: 1px solid #ff4d4d;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .error-title {
+            color: #ff4d4d;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .error-details {
+            color: #ffd700;
+            font-size: 12px;
+            direction: ltr;
+            display: inline-block;
+            background: #000;
+            padding: 5px;
+            border-radius: 4px;
+            margin-top: 10px;
+            word-break: break-all;
+        }
+        .loading {
+            text-align: center;
+            color: #888;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
+
     <h1>APT Media</h1>
     <div id="news-container">
-        <p class="loading" id="loading-text">لە بارکردنی نوێترین هەواڵەکانی APT Media...</p>
+        <div class="loading">چاوەڕێ بکە، زانیارییەکان باردەکرێن...</div>
     </div>
 
     <script>
@@ -26,36 +93,53 @@
             const container = document.getElementById('news-container');
             
             try {
-                // هێنانی داتاکان لە APIـیەکەی خۆتەوە
                 const response = await fetch('/api/news');
-                if (!response.ok) throw new Error('کێشە لە پەیوەندی هەیە');
+                const rawData = await response.text(); 
                 
-                const result = await response.json();
-                const newsData = result.data;
+                try {
+                    const result = JSON.parse(rawData);
+                    const newsData = result.data || result; // بۆ دڵنیابوونەوە لە شێوازی داتاکە
 
-                // پیشاندانی هەواڵەکان ئەگەر بوونیان هەبوو
-                if (newsData && newsData.length > 0) {
-                    container.innerHTML = ''; 
-                    newsData.forEach(news => {
-                        const newsDiv = document.createElement('div');
-                        newsDiv.className = 'news-item';
-                        newsDiv.innerHTML = `
-                            <h3>${news.title}</h3>
-                            <p>${news.content}</p>
-                            <small>${news.date}</small>
-                        `;
-                        container.appendChild(newsDiv);
-                    });
-                } else {
-                    container.innerHTML = '<p class="error">هیچ هەواڵێک بەردەست نییە لەم مەودایەدا.</p>';
+                    if (Array.isArray(newsData) && newsData.length > 0) {
+                        container.innerHTML = ''; 
+                        newsData.forEach(news => {
+                            const newsDiv = document.createElement('div');
+                            newsDiv.className = 'news-item';
+                            newsDiv.innerHTML = `
+                                <h3>${news.title || 'بێ ناونیشان'}</h3>
+                                <p>${news.content || news.description || 'بێ ناوەڕۆک'}</p>
+                                <small>${news.date || ''}</small>
+                            `;
+                            container.appendChild(newsDiv);
+                        });
+                    } else {
+                        // ئەگەر API ئیشی کرد بەڵام داتای تیا نەبوو
+                        container.innerHTML = `
+                            <div class="error-box">
+                                <span class="error-title">هیچ هەواڵێک بەردەست نییە! (API خاڵییە)</span>
+                                <span class="error-details">داتای گەڕاوە: ${JSON.stringify(result)}</span>
+                            </div>`;
+                    }
+                } catch (jsonError) {
+                    // ئەگەر API ئێرۆری HTML یان کۆدی هەڵەی نارد
+                    container.innerHTML = `
+                        <div class="error-box">
+                            <span class="error-title">کێشە لە API یەکە هەیە (وەڵامەکە JSON نییە)</span>
+                            <span class="error-details">${rawData.substring(0, 150)}...</span>
+                        </div>`;
                 }
             } catch (error) {
-                console.error('Error fetching news:', error);
-                container.innerHTML = '<p class="error">کێشەیەک هەیە لە هێنانی هەواڵەکان، تکایە ئینتەرنێتەکەت بپشکنە.</p>';
+                // ئەگەر هەر پەیوەندی بە API نەکرا
+                container.innerHTML = `
+                    <div class="error-box">
+                        <span class="error-title">کێشە لە پەیوەندیکردن هەیە</span>
+                        <span style="color:#ccc; font-size:14px;">دڵنیابەرەوە لە ئینتەرنێتەکەت یان سێرڤەرەکە</span>
+                    </div>`;
             }
         }
 
         window.onload = fetchNews;
     </script>
+
 </body>
 </html>
