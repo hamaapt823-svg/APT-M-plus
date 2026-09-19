@@ -6,17 +6,31 @@ const redis = new Redis({
 })
 
 export default async function handler(req, res) {
-  try {
-    // دەتوانیت لێرەدا داتاکانی هەواڵ لە داتابەیس بخوێنیتەوە یان بنووسیت
-    await redis.set("foo", "bar");
-    const value = await redis.get("foo");
+  // کاتێک نامەیەک یان شتێک لە تیلیگرامەوە دەگاتە سایتەکە
+  if (req.method === 'POST') {
+    const update = req.body;
+    
+    // پشکنین بۆ ئەوەی دڵنیا بین نامەکە یان تێکستەکە هی کەناڵ یان چاتەکەیە
+    const messageText = update.message?.text || update.channel_post?.text;
 
-    res.status(200).json({ 
-      success: true, 
-      message: 'داتابەیسەکە بە سەرکەوتوویی بەستراوەتەوە!',
-      data: value 
-    });
+    if (messageText) {
+      // ڕاستەوخۆ لە داتابەیس پاشەکەوتی دەکەین
+      await redis.lpush('news_list', JSON.stringify({ 
+        text: messageText, 
+        date: new Date() 
+      }));
+    }
+
+    return res.status(200).json({ success: true });
+  }
+
+  // بۆ نیشاندان و خوێندنەوەی هەموو شتەکان لە ئەپەکەتدا
+  try {
+    const news = await redis.lrange('news_list', 0, -1);
+    const parsedNews = news.map(item => JSON.parse(item));
+    
+    return res.status(200).json({ success: true, data: parsedNews });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ success: false, error: error.message });
   }
 }
