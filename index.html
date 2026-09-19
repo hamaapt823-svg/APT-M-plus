@@ -99,7 +99,6 @@
       font-size: 12px;
       text-align: right;
       cursor: pointer;
-      transition: 0.2s;
     }
 
     .cat-btn.active, .cat-btn:hover {
@@ -154,17 +153,10 @@
       font-size: 11px;
       color: var(--text-secondary);
       line-height: 1.4;
-      margin-bottom: 6px;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-    }
-
-    .news-date {
-      font-size: 10px;
-      color: var(--accent-color);
-      font-weight: bold;
     }
 
     .status-msg { text-align: center; padding: 25px; color: var(--text-secondary); font-size: 13px; width: 100%; }
@@ -189,7 +181,6 @@
         <button class="cat-btn" onclick="loadNews('local', this)">هەواڵی ناوخۆیی</button>
         <button class="cat-btn" onclick="loadNews('world', this)">هەواڵی جیهانی</button>
         <button class="cat-btn" onclick="loadNews('sports', this)">هەواڵی وەرزشی</button>
-        <button class="cat-btn" onclick="loadNews('economy', this)">هەواڵی ئابووری</button>
       </aside>
 
       <main class="feed-container" id="feedContainer">
@@ -201,51 +192,52 @@
   <script>
     let articlesCache = [];
 
-    const feeds = {
-      all: 'https://www.awene.com/rss',
-      local: 'https://www.awene.com/rss',
-      world: 'https://www.awene.com/rss',
-      sports: 'https://www.awene.com/rss',
-      economy: 'https://www.awene.com/rss'
-    };
-
-    async function loadNews(category, btn) {
-      if (btn) {
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-      }
-
+    async function loadNews() {
       const container = document.getElementById('feedContainer');
       container.innerHTML = '<div class="status-msg">بارکردنی تازەترین هەواڵەکان...</div>';
 
-      const targetUrl = feeds[category] || feeds.all;
-      const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(targetUrl)}`;
+      // بەکارهێنانی سەرچاوەی AllOrigins بۆ تێپەڕاندنی بلۆکەکە
+      const targetUrl = encodeURIComponent('https://www.awene.com/rss');
+      const apiUrl = `https://api.allorigins.win/get?url=${targetUrl}`;
 
       try {
         const response = await fetch(apiUrl);
         const data = await response.json();
+        
+        if (data.contents) {
+          const parser = new DOMParser();
+          const xmlDoc = parser.parseFromString(data.contents, "text/xml");
+          const items = xmlDoc.querySelectorAll("item");
 
-        if (data.status === 'ok' && data.items && data.items.length > 0) {
-          articlesCache = data.items.map(item => {
-            const tempDiv = document.createElement("div");
-            tempDiv.innerHTML = item.description || '';
-            const cleanText = tempDiv.textContent || tempDiv.innerText || '';
+          articlesCache = [];
+          items.forEach((item, index) => {
+            if (index < 15) {
+              const title = item.querySelector("title")?.textContent || "";
+              const link = item.querySelector("link")?.textContent || "#";
+              const rawDesc = item.querySelector("description")?.textContent || "";
+              
+              // دروستکردنی فۆرماتی خاوێن بۆ هەواڵەکە
+              const temp = document.createElement("div");
+              temp.innerHTML = rawDesc;
+              const cleanDesc = temp.textContent || temp.innerText || "";
+              const imgMatch = rawDesc.match(/src=["']([^"']+)["']/);
+              const img = imgMatch ? imgMatch[1] : "";
 
-            return {
-              title: item.title,
-              link: item.link,
-              date: item.pubDate,
-              description: cleanText.trim().slice(0, 150) + '...',
-              img: item.thumbnail || item.enclosure?.link || ''
-            };
+              articlesCache.push({
+                title: title.trim(),
+                link: link.trim(),
+                description: cleanDesc.trim().slice(0, 120) + "...",
+                img: img
+              });
+            }
           });
 
           displayArticles(articlesCache);
         } else {
-          container.innerHTML = '<div class="status-msg">هیچ هەواڵێک لەم بەشەدا نییە.</div>';
+          container.innerHTML = '<div class="status-msg">هیچ هەواڵێک نەدۆزرایەوە.</div>';
         }
       } catch (err) {
-        container.innerHTML = '<div class="status-msg">کێشە لە گرێدان ڕوویدا. تکایە دووبارە تاقیبکەرەوە.</div>';
+        container.innerHTML = '<div class="status-msg">کێشە لە بارکردنی هەواڵەکان دروست بوو.</div>';
       }
     }
 
@@ -254,7 +246,7 @@
       container.innerHTML = '';
 
       if (articles.length === 0) {
-        container.innerHTML = '<div class="status-msg">هیچ ئەنجامێک نەدۆزرایەوە.</div>';
+        container.innerHTML = '<div class="status-msg">هیچ هەواڵێک بەردەست نییە.</div>';
         return;
       }
 
@@ -263,8 +255,6 @@
         card.className = 'news-card';
         card.href = art.link;
         card.target = '_blank';
-
-        const timeString = art.date ? new Date(art.date).toLocaleTimeString('ckb-IQ', { hour: '2-digit', minute: '2-digit' }) : '';
 
         const imgTag = art.img 
           ? `<img src="${art.img}" alt="news" onerror="this.style.display='none'">` 
@@ -277,7 +267,6 @@
               <h2 class="news-title">${art.title}</h2>
               <p class="news-desc">${art.description}</p>
             </div>
-            <span class="news-date">${timeString}</span>
           </div>
         `;
         container.appendChild(card);
@@ -302,7 +291,7 @@
       if (e.key === 'Enter') executeSearch();
     });
 
-    loadNews('all');
+    loadNews();
   </script>
 </body>
 </html>
