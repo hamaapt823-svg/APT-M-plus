@@ -11,6 +11,7 @@ export default async function handler(req, res) {
     const messageText = update.message?.text || update.channel_post?.text;
 
     if (messageText) {
+      // لێرەدا نامە نوێیەکە لە سەرەتای لیستەکەدا زیاد دەکەین
       await redis.lpush('news_list', JSON.stringify({ 
         text: messageText, 
         date: new Date().toISOString() 
