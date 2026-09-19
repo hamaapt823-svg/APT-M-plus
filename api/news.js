@@ -1,15 +1,21 @@
-import { Redis } from '@upstash/redis';
+import { Redis } from '@upstash/redis'
 
-// بەستنەوەی ڕاستەوخۆ بە داتابەیسی Upstash Redis بۆ APT Media
 const redis = new Redis({
   url: 'https://eternal-treefrog-44000.upstash.io',
-  token: 'لێرە_توکنەکەی_خۆت_دابنە',
-});
+  token: 'AavgAAIgcDFmOGE0ZTU2YzYyZmI0NWEyYWYxYTI0MzBlNmI4MzM1YQ',
+})
 
 export default async function handler(req, res) {
   try {
-    // لێرە لۆجیکی خوێندنەوە یان ناردنی هەواڵەکان دادەنرێت
-    res.status(200).json({ success: true, message: 'بۆتەکەی APT Media بە سەرکەوتوویی کار دەکات!' });
+    // دەتوانیت لێرەدا داتاکانی هەواڵ لە داتابەیس بخوێنیتەوە یان بنووسیت
+    await redis.set("foo", "bar");
+    const value = await redis.get("foo");
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'داتابەیسەکە بە سەرکەوتوویی بەستراوەتەوە!',
+      data: value 
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
