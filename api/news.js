@@ -1,9 +1,9 @@
-// پاشەکەوتکردنی کاتی و فایلی داتا بۆ سێرڤەری ڤێرسێل
-let liveNewsDatabase = [
+// فایلی api/news.js بۆ پلاتفۆرمی APT Media
+let persistentDatabase = [
   {
     id: 1,
-    title: "سیستمی خۆکاری APT Media دەستی بە کار کرد",
-    content: "ئێستا پلاتفۆرمەکە بە شێوەیەکی لایڤ لە ڕێگەی تەلەگرامەوە نوێ دەبێتەوە.",
+    title: "سیستمی خۆکاری APT Media کارا شد",
+    content: "ئێستا پەیوەندی لەگەڵ تەلەگرام سەرکەوتوو بوو و پلاتفۆرمەکە ئامادەیە.",
     date: "ئەمڕۆ",
     category: "ناوخۆیی",
     timestamp: Date.now()
@@ -19,59 +19,60 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  // ئەگەر پەیامێک لە تەلەگرامەوە یان لە ڕێگەی POSTـەوە هات
+  // ئەگەر پەیامێک لە تەلەگرامەوە هات (POST)
   if (req.method === 'POST') {
     try {
-      let title, content, category;
-
-      if (req.body && req.body.message) {
-        const text = req.body.message.text || '';
-        const lines = text.split('\n');
-        title = lines[0] || 'هەواڵی نوێ';
-        content = text;
-        category = 'ناوخۆیی';
-      } else if (req.body) {
-        title = req.body.title;
-        content = req.body.content;
-        category = req.body.category || 'گشتی';
+      const body = req.body;
+      let text = '';
+      
+      if (body && body.message && body.message.text) {
+        text = body.message.text;
+      } else if (body && body.text) {
+        text = body.text;
       }
 
-      if (!content) {
-        return res.status(400).json({ success: false, error: 'ناوەڕۆکی پەیام بەتاڵە' });
+      if (!text) {
+        return res.status(200).json({ success: true, message: 'پەیامەکە بەتاڵ بوو بەڵام وەرگیرا' });
       }
 
-      const newNewsItem = {
+      // دابەشکردنی تێکستەکە بۆ ناونیشان و ناوەڕۆک
+      const lines = text.split('\n');
+      const title = lines[0] || 'هەواڵی نوێ لە تەلەگرام';
+      const content = lines.slice(1).join('\n') || text;
+
+      const newItem = {
         id: Date.now(),
-        title: (title || 'هەواڵی لایڤ').trim(),
+        title: title.trim(),
         content: content.trim(),
-        category: category,
-        date: 'ئەمڕۆ - ' + new Date().toLocaleTimeString('ckb', { hour: '2-digit', minute: '2-digit' }),
+        category: 'ناوخۆیی',
+        date: new Date().toLocaleTimeString('ckb', { hour: '2-digit', minute: '2-digit' }),
         timestamp: Date.now()
       };
 
-      liveNewsDatabase.unshift(newNewsItem);
+      persistentDatabase.unshift(newItem);
 
       return res.status(200).json({ 
         success: true, 
-        message: 'هەواڵەکە بە سەرکەوتوویی زیاد کرا', 
-        data: newNewsItem 
+        message: 'هەواڵەکە بە سەرکەوتوویی زیاد کرا بۆ سایتەکە',
+        data: newItem 
       });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });
     }
   }
 
-  // ناردنی هەواڵەکان بۆ فڕۆنتەند
-  liveNewsDatabase.sort((a, b) => b.timestamp - a.timestamp);
-  return res.status(200).json({ 
-    success: true, 
-    articles: liveNewsDatabase.map(item => ({
+  // ناردنی لیستی هەواڵەکان بۆ فڕۆنتەند (GET)
+  persistentDatabase.sort((a, b) => b.timestamp - a.timestamp);
+  
+  return res.status(200).json({
+    success: true,
+    articles: persistentDatabase.map(item => ({
       title: item.title,
       url: '#',
       summary: item.content,
-      published: new Date(item.timestamp).toISOString(),
-      source: 'APT Media'
+      published: item.date,
+      source: 'APT Media Telegram'
     })),
-    data: liveNewsDatabase 
+    data: persistentDatabase
   });
 }
