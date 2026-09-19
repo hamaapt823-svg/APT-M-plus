@@ -1,21 +1,11 @@
-{
-  "name": "apt-media",
-  "version": "1.0.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "lucide-react": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "vite": "latest"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "latest",
-    "typescript": "latest"
-  }
-}
+const express = require('express');
+const cors = require('cors');
+const newsHandler = require('./api/news');
+
+const app = express();
+app.use(cors());
+
+app.get('/api/news', newsHandler);
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`سێرڤەر کار دەکات لەسەر پۆرت: ${PORT}`));
