@@ -201,13 +201,13 @@
   <script>
     let articlesCache = [];
 
-    // سەرچاوەی کراوەی ڕووداو (ڕاستەوخۆ کار دەکات)
+    // بەکارهێنانی سەرچاوەی کراوەی Awene کێشەی Cloudflare دروست ناکات
     const feeds = {
-      all: 'https://www.rudaw.net/sorani/rss',
-      local: 'https://www.rudaw.net/sorani/kurdistan/rss',
-      world: 'https://www.rudaw.net/sorani/world/rss',
-      sports: 'https://www.rudaw.net/sorani/sports/rss',
-      economy: 'https://www.rudaw.net/sorani/business/rss'
+      all: 'https://www.awene.com/rss',
+      local: 'https://www.awene.com/rss',
+      world: 'https://www.awene.com/rss',
+      sports: 'https://www.awene.com/rss',
+      economy: 'https://www.awene.com/rss'
     };
 
     async function loadNews(category, btn) {
@@ -228,7 +228,6 @@
 
         if (data.status === 'ok' && data.items && data.items.length > 0) {
           articlesCache = data.items.map(item => {
-            // پاککردنەوەی تاگەکان بۆ وەدەستهێنانی پوختەی هەواڵەکە
             const tempDiv = document.createElement("div");
             tempDiv.innerHTML = item.description || '';
             const cleanText = tempDiv.textContent || tempDiv.innerText || '';
