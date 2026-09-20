@@ -3,197 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APT Media</title>
+    <title>ئەپی هەواڵەکان</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body {
-            background-color: #050505;
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        header {
-            width: 100%;
-            background-color: #111;
-            padding: 15px 0;
-            text-align: center;
-            border-bottom: 1px solid #222;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-        h1 {
-            color: #fff;
-            margin: 0 0 10px 0;
-            font-size: 24px;
-            letter-spacing: 1px;
-        }
-        .categories {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            padding: 0 10px;
-            overflow-x: auto;
-            max-width: 600px;
-            white-space: nowrap;
-        }
-        .category-btn {
-            background-color: #222;
-            color: #ccc;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: 0.3s;
-        }
-        .category-btn.active, .category-btn:hover {
-            background-color: #e50914;
-            color: #fff;
-        }
-        #news-container {
-            width: 100%;
-            max-width: 500px;
-            padding: 20px 10px;
-        }
-        .news-item {
-            background-color: #1a1a1a;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-radius: 12px;
-            border: 1px solid #333;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            animation: fadeIn 0.5s ease;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .news-tag {
-            background-color: #333;
-            color: #e50914;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: bold;
-            display: inline-block;
-            margin-bottom: 8px;
-        }
-        .news-item h3 {
-            margin: 0 0 10px 0;
-            color: #fff;
-            font-size: 18px;
-        }
-        .news-item p {
-            margin: 0 0 15px 0;
-            color: #d1d1d1;
-            font-size: 15px;
-            line-height: 1.5;
-        }
-        .news-item small {
-            color: #888;
-            font-size: 12px;
-        }
-        .loader {
-            text-align: center;
-            color: #888;
-            padding: 15px;
-            font-size: 14px;
-            display: none;
-        }
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; padding: 20px; margin: 0; }
+        .header { text-align: center; background: #2c3e50; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .news-card { background: white; padding: 20px; margin-bottom: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .news-title { font-size: 1.4em; color: #e74c3c; font-weight: bold; margin-bottom: 10px; }
+        .news-content { font-size: 1.1em; color: #34495e; line-height: 1.6; }
+        .news-time { font-size: 0.8em; color: #7f8c8d; margin-bottom: 15px; }
+        .loading { text-align: center; color: #7f8c8d; }
     </style>
 </head>
 <body>
-
-    <header>
-        <h1>APT Media</h1>
-        <div class="categories">
-            <button class="category-btn active" onclick="filterCategory('هەموو', this)">گشتی</button>
-            <button class="category-btn" onclick="filterCategory('ناوخۆیی', this)">ناوخۆیی</button>
-            <button class="category-btn" onclick="filterCategory('وەرزشی', this)">وەرزشی</button>
-            <button class="category-btn" onclick="filterCategory('تەکنەلۆژیا', this)">تەکنەلۆژیا</button>
-        </div>
-    </header>
-
-    <div id="news-container"></div>
-    <div id="loader" class="loader">لە بارکردنی هەواڵی زیاتر...</div>
+    <div class="header">
+        <h1>سەرەکیترین هەواڵەکان (ڕاستەوخۆ)</h1>
+    </div>
+    <div id="news-feed"><p class="loading">چاوەڕێی هەواڵەکان بکە...</p></div>
 
     <script>
-        let allNewsData = [];
-        let currentFiltered = [];
-        let displayedCount = 0;
-        const pageSize = 2; // ژمارەی هەواڵ لە هەر جارێکدا بۆ تاقیکردنەوەی سکرۆل
-        let isLoading = false;
-        let currentCategory = 'هەموو';
+        // بەستەر و کلیلی گشتی پڕۆژەکەت
+        const supabaseUrl = 'https://pzucdmjnkvptmedrwtnm.supabase.co';
+        const supabaseKey = 'EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6dWNkbWpua3ZwdG1lZHJ3dG5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4ODQ0MjIsImV4cCI6MjEwNTQ2MDQyMn0.fSgHzvBlsZjlE969cJzjNtcc2Zimhrp0YI_ApZVOV_g';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
         async function fetchNews() {
-            try {
-                const response = await fetch('/api/news');
-                const result = await response.json();
-                allNewsData = result.data || [];
-                
-                filterCategory('هەموو', document.querySelector('.category-btn'));
-            } catch (error) {
-                document.getElementById('news-container').innerHTML = '<div class="loader" style="color:#ff4d4d;">کێشە لە هێنانی زانیارییەکان هەیە.</div>';
+            const { data, error } = await supabase.from('news').select('*').order('created_at', { ascending: false });
+            if (error) {
+                console.error(error);
+                return;
             }
-        }
-
-        function filterCategory(category, btn) {
-            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-            if(btn) btn.classList.add('active');
-
-            currentCategory = category;
-            if (category === 'هەموو') {
-                currentFiltered = allNewsData;
-            } else {
-                currentFiltered = allNewsData.filter(item => item.category === category);
-            }
-
-            document.getElementById('news-container').innerHTML = '';
-            displayedCount = 0;
-            loadMoreNews();
-        }
-
-        function loadMoreNews() {
-            if (isLoading) return;
-            if (displayedCount >= currentFiltered.length) return;
-
-            isLoading = document.getElementById('loader').style.display = 'block';
+            const feed = document.getElementById('news-feed');
+            feed.innerHTML = '';
             
-            setTimeout(() => {
-                const container = document.getElementById('news-container');
-                const nextItems = currentFiltered.slice(displayedCount, displayedCount + pageSize);
-
-                nextItems.forEach(news => {
-                    const newsDiv = document.createElement('div');
-                    newsDiv.className = 'news-item';
-                    newsDiv.innerHTML = `
-                        <span class="news-tag">${news.category || 'گشتی'}</span>
-                        <h3>${news.title}</h3>
-                        <p>${news.content}</p>
-                        <small>${news.date}</small>
-                    `;
-                    container.appendChild(newsDiv);
-                });
-
-                displayedCount += nextItems.length;
-                document.getElementById('loader').style.display = 'none';
-                isLoading = false;
-            }, 500); // کاتێکی کەم بۆ نیشاندانی باری بارکردن
+            if (data.length === 0) {
+                feed.innerHTML = '<p class="loading">هیچ هەواڵێک بوونی نییە.</p>';
+                return;
+            }
+            
+            data.forEach(news => {
+                feed.innerHTML += `
+                    <div class="news-card">
+                        <div class="news-title">${news.title}</div>
+                        <div class="news-content">${news.content.replace(/\n/g, '<br>')}</div>
+                    </div>
+                `;
+            });
         }
 
-        // چاودێریکردنی سکرۆلی شاشە
-        window.addEventListener('scroll', () => {
-            if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100) {
-                loadMoreNews();
-            }
-        });
+        // هێنانی هەواڵەکان لە کاتی کردنەوەی ئەپەکە
+        fetchNews();
 
-        window.onload = fetchNews;
+        // چاودێریکردنی داتابەیز بۆ هەواڵی نوێ بێ ڕیفرێش
+        supabase.channel('custom-all-channel')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'news' }, payload => {
+                fetchNews();
+            })
+            .subscribe();
     </script>
-
 </body>
 </html>
